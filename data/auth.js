@@ -218,14 +218,14 @@ export async function verificarPermissaoUsuario() {
 
         const safeParaExibicao = window.estadoAtual !== EstadoFluxo.CATEGORIZANDO && window.estadoAtual !== EstadoFluxo.COMPLEMENTANDO && window.estadoAtual !== EstadoFluxo.EDITANDO;
 
-        if (nivel >= 1) {
+        if (nivel >= 2) {
             const categ = document.getElementById("categoria")?.value;
             const mostrarComp = categ && safeParaExibicao;
             if (elementos.btnComp && mostrarComp) elementos.btnComp.style.display = "flex";
             if (elementos.btnCateg && safeParaExibicao) elementos.btnCateg.style.display = "block";
         }
 
-        if (nivel >= 2) {
+        if (nivel >= 3) {
             if(elementos.btnEdit && safeParaExibicao) elementos.btnEdit.style.display = "inline-block";
         }
 
