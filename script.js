@@ -302,7 +302,7 @@ window.PainelEdicao = function(mostrar, tempOccult = false){
         const permissao = Number(window.nivelPermissaoUsuario) || 0;
         console.log("Checando permissão para exibir btnModoEdicao:", permissao);
 
-        if (permissao >= 2 && !tempOccult) {
+        if (permissao >= 3 && !tempOccult) {
             window.alterarVisibilidadeElemento("btnModoEdicao", true);
         }
 
