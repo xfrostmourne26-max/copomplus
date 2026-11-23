@@ -1,10 +1,10 @@
 //Ultilitarios do projeto
 import * as db from './data/database.js';
 import * as auth from './data/auth.js';
-import * as grid from './data/gridStackManager.js';
-import * as sort from './data/sortableJSManager.js';
+import * as grid from './data/gridstackmanager.js';
+import * as sort from './data/sortablejsmanager.js';
 import * as edit from './data/editor.js';
-import * as user from './data/userPanel.js';
+import * as user from './data/userpanel.js';
 //Funções do projeto
 import * as despacho from './data/despacho.js';
 import * as categ from './data/categ.js';
