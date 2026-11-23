@@ -1,11 +1,10 @@
 //#region EVENTOS
-window.registrarComplementoEventos = function(db){
-
+window.registrarComplementoEventos = function(db) {
     //#region LOGICA DO PAINEL DE REGISTRO
 
     const painel = document.getElementById("bodyRegistro");
     const handle = document.getElementById("dragHandleRegistro");
-    
+
     if (!painel || !handle) return;
 
     let isDragging = false;
@@ -14,7 +13,7 @@ window.registrarComplementoEventos = function(db){
 
     handle.addEventListener("mousedown", (e) => {
         if (e.button !== 0) return;
-        e.preventDefault(); 
+        e.preventDefault();
         isDragging = true;
         painel.style.transition = "none";
         const rect = painel.getBoundingClientRect();
@@ -36,7 +35,7 @@ window.registrarComplementoEventos = function(db){
         bounds.minY = 0;
         bounds.maxY = Math.max(0, parent.clientHeight - painel.offsetHeight);
         document.body.style.cursor = "grabbing";
-        document.body.style.userSelect = "none"; 
+        document.body.style.userSelect = "none";
     });
 
     document.addEventListener("mousemove", (e) => {
@@ -55,7 +54,7 @@ window.registrarComplementoEventos = function(db){
     document.addEventListener("mouseup", () => {
         if (isDragging) {
             isDragging = false;
-            painel.style.transition = ""; 
+            painel.style.transition = "";
             document.body.style.cursor = "";
             document.body.style.userSelect = "";
         }
@@ -65,70 +64,79 @@ window.registrarComplementoEventos = function(db){
 
     //#region LOGICA DOS CAMPOS DENTRO DO PAINEL DE REGISTRO
 
-    document.getElementById("btnRegistrar").addEventListener("click", async (evento) => { 
-        const btn = evento.target;
+    document.getElementById("btnRegistrar")?.addEventListener("click", async (evento) => {
+        const btn = evento.currentTarget;
         const textoOriginal = btn.textContent;
         btn.disabled = true;
         btn.textContent = "Registrando...";
 
         try {
-            switch(window.estadoAtual) {
-                case EstadoFluxo.CATEGORIZANDO:
-                    const salvouCategoriaComSucesso = await db.salvarNovaCategoria(); 
+            switch (window.estadoAtual) {
+                case EstadoFluxo.CATEGORIZANDO: {
+                    const salvouCategoriaComSucesso = await db.salvarNovaCategoria();
                     if (salvouCategoriaComSucesso) {
-                        window.fecharNovaCategoria(); 
-                    }
-                    break; 
-                case EstadoFluxo.COMPLEMENTANDO:
-                    const salvouComplementoComSucesso = await db.salvarNovoComplemento();
-                    if (salvouComplementoComSucesso) {
-                        await window.salvarCardsModificados(); 
-                        window.fecharNovoComplemento();
-                        window.carregarCards();
+                        window.fecharNovaCategoria();
                     }
                     break;
+                }
+                case EstadoFluxo.COMPLEMENTANDO: {
+                    const salvouComplementoComSucesso = await db.salvarNovoComplemento();
+                    if (salvouComplementoComSucesso) {
+                        if (typeof window.salvarCardsModificados === "function") {
+                            await window.salvarCardsModificados();
+                        }
+                        window.fecharNovoComplemento();
+                        if (typeof window.carregarCards === "function") {
+                            window.carregarCards();
+                        }
+                    }
+                    break;
+                }
                 case EstadoFluxo.EDITANDO:
-                    window.salvarNovosDados();
+                    if (typeof window.salvarNovosDados === "function") {
+                        window.salvarNovosDados();
+                    }
                     break;
             }
         } finally {
-            btn.disabled = false; 
-            btn.textContent = textoOriginal; 
+            btn.disabled = false;
+            btn.textContent = textoOriginal;
         }
     });
 
-    document.getElementById("btnCancelar").addEventListener("click", () => {
-        switch(window.estadoAtual) {
+    document.getElementById("btnCancelar")?.addEventListener("click", () => {
+        switch (window.estadoAtual) {
             case EstadoFluxo.CATEGORIZANDO:
                 window.fecharNovaCategoria();
                 break;
             case EstadoFluxo.COMPLEMENTANDO:
                 window.fecharNovoComplemento();
-                window.carregarCards();
+                if (typeof window.carregarCards === "function") {
+                    window.carregarCards();
+                }
                 break;
             case EstadoFluxo.EDITANDO:
                 window.fecharPainelEdicao();
                 break;
         }
     });
-    
-    //registro de nova complementação
-    window.registrar("btnComplemento","click",() => window.toggleComplemento());
-    window.registrar("complementoTipo", "change",() =>  window.sincronizarTela());
-    window.registrar("selectListaTipo", "change",() =>  window.sincronizarTela());
-    window.registrar("inputListaNome", "input",() =>  window.sincronizarTela());
-    window.registrar("selectListaExistente", "change",() =>  window.sincronizarTela());
-    window.registrar("inputNomeOpcao", "input",() =>  window.sincronizarTela());
-    window.registrar("inputTextoResultado", "input",() =>  window.sincronizarTela());
-    window.registrar("selectRegraOculto", "change", (e) => {
+
+    // Registro de nova complementação
+    window.registrar("btnComplemento", "click", () => window.toggleComplemento());
+    window.registrar("complementoTipo", "change", () => window.sincronizarTela());
+    window.registrar("selectListaTipo", "change", () => window.sincronizarTela());
+    window.registrar("inputListaNome", "input", () => window.sincronizarTela());
+    window.registrar("selectListaExistente", "change", () => window.sincronizarTela());
+    window.registrar("inputNomeOpcao", "input", () => window.sincronizarTela());
+    window.registrar("inputTextoResultado", "input", () => window.sincronizarTela());
+    window.registrar("selectRegraOculto", "change", () => {
         window.sincronizarTela();
         window.verificarOperadorOculto();
     });
-    window.registrar("btnAdicionarOpcaoLista", "click", () => window.adicionarOpcaoPendente()); // NOVO
-    
+    window.registrar("btnAdicionarOpcaoLista", "click", () => window.adicionarOpcaoPendente());
+
     //#endregion
-    
-}
+};
 //#endregion
 
 window.cardPreview = null;
@@ -138,22 +146,71 @@ let ultimoTipoRenderizado = "";
 let listasForamPopuladas = false;
 let regrasOcultasForamPopuladas = false;
 
+function normalizarCategLookup(texto = "") {
+    return String(texto)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
+
+function obterCategoriaSelecionadaId() {
+    const select = document.getElementById("categoria");
+
+    const candidatos = [
+        window.categoriaSelecionada?.id,
+        select?.dataset?.selectedId,
+        select?.selectedOptions?.[0]?.dataset?.id,
+        select?.value
+    ];
+
+    for (const cand of candidatos) {
+        if (cand === null || cand === undefined || typeof cand === "object") continue;
+        const str = String(cand).trim();
+        if (/^\d+$/.test(str) && Number(str) > 0) {
+            return Number(str);
+        }
+    }
+
+    // Fallback: se o input recebeu o NOME da categoria em vez do ID, resolve pelo nome
+    const textoBusca = normalizarCategLookup(window.categoriaSelecionada?.nome || select?.value || "");
+    if (textoBusca && Array.isArray(window.listaDeCategorias)) {
+        const encontrada = window.listaDeCategorias.find(
+            cat => normalizarCategLookup(cat.nome) === textoBusca
+        );
+        if (encontrada && /^\d+$/.test(String(encontrada.id).trim())) {
+            const idResolvido = Number(String(encontrada.id).trim());
+            window.categoriaSelecionada = encontrada;
+            if (select) select.dataset.selectedId = String(idResolvido);
+            return idResolvido;
+        }
+    }
+
+    return null;
+}
+
 //#region Complemento
 // =====================================================
 
-window.toggleComplemento = function () {
-    window.estadoAtual === EstadoFluxo.COMPLEMENTANDO ? window.fecharNovoComplemento() : window.exibirNovoComplemento();
+window.toggleComplemento = function() {
+    if (window.estadoAtual === EstadoFluxo.COMPLEMENTANDO) {
+        window.fecharNovoComplemento();
+    } else {
+        window.exibirNovoComplemento();
+    }
     listasForamPopuladas = false;
     regrasOcultasForamPopuladas = false;
-}
+};
 
-window.exibirNovoComplemento = function () {
+window.exibirNovoComplemento = function() {
     if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 2) {
         console.warn("Usuário não autorizado a criar opções.");
         return;
     }
 
-    if (window.estadoAtual === EstadoFluxo.CATEGORIZANDO) window.fecharNovaCategoria();
+    if (window.estadoAtual === EstadoFluxo.CATEGORIZANDO) {
+        window.fecharNovaCategoria();
+    }
 
     window.estadoAtual = EstadoFluxo.COMPLEMENTANDO;
     window.cardsModificados?.clear();
@@ -161,11 +218,17 @@ window.exibirNovoComplemento = function () {
     window.posicaoSugeridaProximaOpcao = null;
     renderizarOpcoesPendentes();
 
-    document.getElementById("tituloCardRegistro").textContent = "Novo Complemento";
-    document.getElementById("complementoTipo").value = "";
+    const tituloEl = document.getElementById("tituloCardRegistro");
+    const tipoEl = document.getElementById("complementoTipo");
+    if (tituloEl) tituloEl.textContent = "Novo Complemento";
+    if (tipoEl) tipoEl.value = "";
 
-    ["btnRegistrar", "btnCancelar", "btnGrid", "btnOutlines", "complementoTipo", "camposDinamicos"].forEach(id => window.alterarVisibilidadeElemento(id, true));
-    ["novoCardCampos", "btnComplemento", "regraOculto", "regraOcultoOperadorContainer", "areaOpcoesPendentes", "btnModoEdicao", "btnNovaCategoria"].forEach(id => window.alterarVisibilidadeElemento(id, false));
+    ["btnRegistrar", "btnCancelar", "btnGrid", "btnOutlines", "complementoTipo", "camposDinamicos"].forEach(id => {
+        window.alterarVisibilidadeElemento(id, true);
+    });
+    ["novoCardCampos", "btnComplemento", "regraOculto", "regraOcultoOperadorContainer", "areaOpcoesPendentes", "btnModoEdicao", "btnNovaCategoria"].forEach(id => {
+        window.alterarVisibilidadeElemento(id, false);
+    });
 
     const gridDinamicos = document.querySelector('.grid-campos-dinamicos');
     if (gridDinamicos) gridDinamicos.classList.add('mostrar-borda');
@@ -174,13 +237,16 @@ window.exibirNovoComplemento = function () {
     window.entrarModoRegistro({ colunaDir: false, grid: true });
 
     sincronizarTela();
-}
-window.fecharNovoComplemento = function () {
+};
+
+window.fecharNovoComplemento = function() {
     window.estadoAtual = EstadoFluxo.FORMULANDO;
 
-    ["complementoTipo", "novoCardCampos", "btnRegistrar", "btnCancelar", "btnGrid", "btnOutlines", "naturezasCampo", "regraOculto", "regraOcultoOperadorContainer", "areaOpcoesPendentes", "aditivoCampo"].forEach(id => window.alterarVisibilidadeElemento(id, false));
+    ["complementoTipo", "novoCardCampos", "btnRegistrar", "btnCancelar", "btnGrid", "btnOutlines", "naturezasCampo", "regraOculto", "regraOcultoOperadorContainer", "areaOpcoesPendentes", "aditivoCampo"].forEach(id => {
+        window.alterarVisibilidadeElemento(id, false);
+    });
     window.alterarVisibilidadeElemento("btnComplemento", window.temCategoria());
-    
+
     const gridDinamicos = document.querySelector('.grid-campos-dinamicos');
     if (gridDinamicos) gridDinamicos.classList.remove('mostrar-borda');
     document.getElementById("camposDinamicos")?.classList.remove("modo-edicao");
@@ -202,7 +268,7 @@ window.fecharNovoComplemento = function () {
 
     removerCardPreviewDoGridInput();
     window.atualizarFormulario();
-}
+};
 
 // =====================================================
 //#endregion
@@ -219,16 +285,15 @@ function renderizarCardPreview(tipo, nomeAtual, opcoes) {
         "inputfield": { w: 6, h: 1 },
         "dropdown": { w: 6, h: 2 }
     };
-    
+
     const dimensao = dimensoesPorTipo[tipo] || { w: 6, h: 2 };
     const conteudo = window.gerarCard(tipo, nomeAtual, opcoes, "preview");
     const htmlCard = window.htmlDoCard(tipo, conteudo, nomeAtual, "preview", "", "preview");
-    
+
     window.cardPreview = window.adicionarCard(htmlCard, dimensao);
 }
 
 function removerCardPreviewDoGridInput() {
-
     if (window.cardPreview) {
         if (window.grid && typeof window.grid.removeWidget === "function") {
             window.grid.removeWidget(window.cardPreview, true);
@@ -237,7 +302,7 @@ function removerCardPreviewDoGridInput() {
         } else {
             window.cardPreview.remove();
         }
-        
+
         window.cardPreview = null;
     }
 }
@@ -264,7 +329,7 @@ window.adicionarOpcaoPendente = function() {
     }
 
     const blocoFantasma = document.querySelector('.text-piece[data-card-id="bloco_complemento_output"]');
-    const ordemContexto = blocoFantasma ? parseInt(blocoFantasma.getAttribute('data-ordem-contexto') || 0) : 0;
+    const ordemContexto = blocoFantasma ? parseInt(blocoFantasma.getAttribute('data-ordem-contexto') || 0, 10) : 0;
     const ordemExibicao = blocoFantasma ? parseFloat(blocoFantasma.getAttribute('data-peso') || 0) : 0;
 
     window.opcoesPendentesLista.push({
@@ -319,7 +384,7 @@ function renderizarOpcoesPendentes() {
 
     lista.querySelectorAll('.btn-remover-opcao-pendente').forEach(btn => {
         btn.addEventListener('click', () => {
-            window.removerOpcaoPendente(parseInt(btn.dataset.indice));
+            window.removerOpcaoPendente(parseInt(btn.dataset.indice, 10));
         });
     });
 }
@@ -328,8 +393,7 @@ function renderizarOpcoesPendentes() {
 //#region Sincronização da Tela Durante Complementação
 
 window.sincronizarTela = function() {
-
-    if (window.estadoAtual === EstadoFluxo.EDITANDO){
+    if (window.estadoAtual === EstadoFluxo.EDITANDO) {
         window.sincronizarTelaEditor();
         return;
     }
@@ -349,17 +413,17 @@ window.sincronizarTela = function() {
     atualizarListasDeDependencia(estado);
 
     atualizarPreviewVisual(
-        estado.tipo, 
-        estado.isDropdown, 
-        estado.isNovoDropdown, 
-        estado.isExistenteDropdown, 
-        estado.idListaExistente, 
-        estado.valorNomeLista, 
+        estado.tipo,
+        estado.isDropdown,
+        estado.isNovoDropdown,
+        estado.isExistenteDropdown,
+        estado.idListaExistente,
+        estado.valorNomeLista,
         estado.valorNomeOpcao
     );
 
     window.atualizarFormulario();
-}
+};
 
 //#region MODULOS AJUDANTES
 function obterEstadoDoComplemento() {
@@ -400,6 +464,7 @@ function obterEstadoDoComplemento() {
         mostrarBuscaNatureza: temPreenchimentoObrigatorio
     };
 }
+
 function atualizarVisibilidadeCampos(estado) {
     window.alterarVisibilidadeElemento("listaTipo", estado.isDropdown);
     window.alterarVisibilidadeElemento("listaNome", estado.isNovoDropdown);
@@ -424,22 +489,22 @@ function atualizarVisibilidadeCampos(estado) {
     window.alternarColuneDireita(estado.mostrarRegraOculto);
     window.alterarVisibilidadeElemento("naturezasCampo", estado.mostrarCardNatureza);
 
-    // NOVO: área de opções pendentes só existe pro fluxo de lista nova
     window.alterarVisibilidadeElemento("areaOpcoesPendentes", estado.isNovoDropdown);
     if (!estado.isNovoDropdown && window.opcoesPendentesLista.length > 0) {
         window.opcoesPendentesLista = [];
         renderizarOpcoesPendentes();
     }
 }
+
 function atualizarTextosEInputs(estado) {
     const inputNomeOpcao = document.getElementById("inputNomeOpcao");
-    
+
     if (inputNomeOpcao) {
         if (!estado.isDropdown) {
             inputNomeOpcao.placeholder = "Nome da Nova Opção...";
         } else if (estado.isNovoDropdown) {
             inputNomeOpcao.placeholder = window.opcoesPendentesLista.length > 0
-                ? "Nome da Próxima Opção..." // NOVO: muda o placeholder depois da primeira
+                ? "Nome da Próxima Opção..."
                 : "Nome da Primeira Opção da Lista...";
         } else if (estado.isExistenteDropdown) {
             inputNomeOpcao.placeholder = "Nome da Nova Opção...";
@@ -466,6 +531,7 @@ function atualizarListasDeDependencia(estado) {
         regrasOcultasForamPopuladas = true;
     }
 }
+
 function popularComListasDaCategoria() {
     const selectMae = document.getElementById("selectListaExistente");
     if (!selectMae || !window.listasDaCategoria) return;
@@ -473,24 +539,24 @@ function popularComListasDaCategoria() {
     const opcoes = window.listasDaCategoria.map(l => `<option value="${l.id}">${l.valor_opcao}</option>`).join("");
     selectMae.innerHTML = `<option value="">-- Escolha uma Lista existente nesta Categoria --</option>${opcoes}`;
 }
+
 function popularSelectOcultoAte() {
-    const selectOculto = document.getElementById("selectRegraOculto"); 
+    const selectOculto = document.getElementById("selectRegraOculto");
     if (!selectOculto) return;
 
     const htmlPadrao = `<option value="">Nenhuma (Sempre Visível)</option>`;
 
-    // NOVO: tudo ordenado alfabeticamente antes de montar
     const camposOrdenados = [...(window.camposDaCategoria || [])].sort((a, b) => a.nome_campo.localeCompare(b.nome_campo, 'pt-BR'));
     const listasOrdenadas = [...(window.listasDaCategoria || [])].sort((a, b) => a.valor_opcao.localeCompare(b.valor_opcao, 'pt-BR'));
 
-    const camposGroup = camposOrdenados.length 
-        ? `<optgroup label="Campos Regulares">` + 
-          camposOrdenados.map(c => `<option value="campo_${c.id}">${c.nome_campo}</option>`).join("") + 
-          `</optgroup>` 
+    const camposGroup = camposOrdenados.length
+        ? `<optgroup label="Campos Regulares">` +
+          camposOrdenados.map(c => `<option value="campo_${c.id}">${c.nome_campo}</option>`).join("") +
+          `</optgroup>`
         : "";
 
     const listasGroup = listasOrdenadas.map(lista => {
-        const opcoesOrdenadas = [...(lista.opcoes || [])].sort((a, b) => a.nome_campo.localeCompare(b.nome_campo, 'pt-BR')); // NOVO
+        const opcoesOrdenadas = [...(lista.opcoes || [])].sort((a, b) => a.nome_campo.localeCompare(b.nome_campo, 'pt-BR'));
         const subOpcoes = opcoesOrdenadas.map(o => `<option value="opcao_${o.id}">↳ Somente se: ${o.nome_campo}</option>`).join("");
         return `
             <optgroup label="Lista: ${lista.valor_opcao}">
@@ -502,21 +568,22 @@ function popularSelectOcultoAte() {
 
     selectOculto.innerHTML = htmlPadrao + camposGroup + listasGroup;
 }
+
 window.verificarOperadorOculto = function() {
     const selectOculto = document.getElementById("selectRegraOculto");
     const checkboxOperador = document.getElementById("checkboxRegraOcultoOperador");
-    
+
     if (!selectOculto) return;
-    
+
     const selecionados = Array.from(selectOculto.selectedOptions).filter(opt => opt.value !== "");
     const temMaisDeUm = selecionados.length > 1;
-    
+
     window.alterarVisibilidadeElemento("regraOcultoOperadorContainer", temMaisDeUm);
 
     if (!temMaisDeUm && checkboxOperador) {
         checkboxOperador.checked = true;
     }
-}
+};
 
 //#endregion
 
@@ -532,8 +599,8 @@ function atualizarPreviewVisual(tipo, isDropdown, isNovoDropdown, isExistenteDro
         return;
     }
 
-    const nomeTopoCard = (isDropdown && isNovoDropdown) 
-        ? (valorNomeLista || "Nome da Lista...") 
+    const nomeTopoCard = (isDropdown && isNovoDropdown)
+        ? (valorNomeLista || "Nome da Lista...")
         : (valorNomeOpcao || "Novo Campo");
 
     if (!window.cardPreview || ultimoTipoRenderizado !== tipo) {
@@ -547,11 +614,12 @@ function atualizarPreviewVisual(tipo, isDropdown, isNovoDropdown, isExistenteDro
         atualizarConteudoDoPreviewCard(tipo, isNovoDropdown, nomeTopoCard, valorNomeOpcao);
     }
 }
+
 function atualizarOpcaoEmDropdownExistente(idListaExistente, valorNomeOpcao) {
-    const dropdownReal = document.getElementById(`lista_${idListaExistente}`) || 
-                         document.getElementById(`campo_${idListaExistente}`) || 
+    const dropdownReal = document.getElementById(`lista_${idListaExistente}`) ||
+                         document.getElementById(`campo_${idListaExistente}`) ||
                          document.querySelector(`[data-id="${idListaExistente}"] select`);
-                         
+
     if (!dropdownReal) return;
 
     dropdownReal.querySelectorAll('.preview-temp-option').forEach(el => el.remove());
@@ -563,8 +631,8 @@ function atualizarOpcaoEmDropdownExistente(idListaExistente, valorNomeOpcao) {
         dropdownReal.value = valorNomeOpcao;
     }
 }
-function atualizarConteudoDoPreviewCard(tipo, isNovoDropdown, nomeTopoCard, valorNomeOpcao) {
 
+function atualizarConteudoDoPreviewCard(tipo, isNovoDropdown, nomeTopoCard, valorNomeOpcao) {
     const cardNomePreview = window.cardPreview.querySelector('.card-preview-nome');
     const cardPreviewInput = window.cardPreview.querySelector('input, select, textarea');
 
@@ -590,36 +658,35 @@ function atualizarConteudoDoPreviewCard(tipo, isNovoDropdown, nomeTopoCard, valo
 // =====================================================
 
 window.entregarDadosDoComplemento = function() {
-
     let grid = { x: 0, y: 0, w: 1, h: 1 };
-    
+
     if (typeof window.cardPreview !== 'undefined') {
         if (window.cardPreview?.gridstackNode) {
             const node = window.cardPreview.gridstackNode;
             grid = { x: node.x || 0, y: node.y || 0, w: node.w || 1, h: node.h || 1 };
         } else if (window.cardPreview) {
-            grid.x = parseInt(window.cardPreview.getAttribute('gs-x') || 0);
-            grid.y = parseInt(window.cardPreview.getAttribute('gs-y') || 0);
-            grid.w = parseInt(window.cardPreview.getAttribute('gs-w') || 1);
-            grid.h = parseInt(window.cardPreview.getAttribute('gs-h') || 1);
+            grid.x = parseInt(window.cardPreview.getAttribute('gs-x') || 0, 10);
+            grid.y = parseInt(window.cardPreview.getAttribute('gs-y') || 0, 10);
+            grid.w = parseInt(window.cardPreview.getAttribute('gs-w') || 1, 10);
+            grid.h = parseInt(window.cardPreview.getAttribute('gs-h') || 1, 10);
         }
     }
 
-    const _categoriaID = document.getElementById("categoria")?.value;
+    const _categoriaID = obterCategoriaSelecionadaId();
     const _tipoCampo = document.getElementById("complementoTipo")?.value;
     const _nomeCampo = document.getElementById("inputNomeOpcao")?.value.trim();
     const _textoResultado = document.getElementById("inputTextoResultado")?.value.trim() || "";
-    
+
     const dropRootElement = document.getElementById("selectListaExistente");
     const _subtipo = document.getElementById("selectListaTipo")?.value;
     const _campoRootId = dropRootElement?.value;
-    
+
     const _novoDropdown = (_tipoCampo === "dropdown" && _subtipo === "novo");
     const _nomeNovoDropdown = document.getElementById("inputListaNome")?.value.trim();
     const _nomeDropdownVinculado = dropRootElement?.options[dropRootElement.selectedIndex]?.text || "";
 
     const _nomeDroproot = _novoDropdown ? (_nomeNovoDropdown || _nomeCampo) : (_nomeDropdownVinculado || _nomeCampo);
-    
+
     const selectOculto = document.getElementById("selectRegraOculto");
     const valoresOcultosSelecionados = selectOculto ? Array.from(selectOculto.selectedOptions).map(opt => opt.value).filter(v => v !== "") : [];
     const checkboxOperador = document.getElementById("checkboxRegraOcultoOperador");
@@ -627,27 +694,23 @@ window.entregarDadosDoComplemento = function() {
     const _ocultoAte = valoresOcultosSelecionados.length > 0 ? valoresOcultosSelecionados.join(` ${operadorOculto} `) : null;
 
     let _ordemContexto = 0;
-    let _ordemExibicao = 0; 
+    let _ordemExibicao = 0;
 
     const blocoFantasma = document.querySelector('.text-piece[data-card-id="bloco_complemento_output"]');
-    
+
     if (blocoFantasma) {
-        _ordemContexto = parseInt(blocoFantasma.getAttribute('data-ordem-contexto') || 0);
+        _ordemContexto = parseInt(blocoFantasma.getAttribute('data-ordem-contexto') || 0, 10);
         _ordemExibicao = parseFloat(blocoFantasma.getAttribute('data-peso') || 0);
-    }
-    else {
-        if (typeof window.obterDadosDeCadaBlocoTexto === 'function') {
-            const todosBlocos = window.obterDadosDeCadaBlocoTexto();
-            
-            const blocosNoContextoCorreto = todosBlocos.filter(b => b.data_contexto === _ordemContexto);
-            
-            let maxOrdem = -1;
-            blocosNoContextoCorreto.forEach(b => {
-                if (b.data_peso > maxOrdem) maxOrdem = b.data_peso;
-            });
-            
-            _ordemExibicao = maxOrdem + 1;
-        }
+    } else if (typeof window.obterDadosDeCadaBlocoTexto === 'function') {
+        const todosBlocos = window.obterDadosDeCadaBlocoTexto();
+        const blocosNoContextoCorreto = todosBlocos.filter(b => b.data_contexto === _ordemContexto);
+
+        let maxOrdem = -1;
+        blocosNoContextoCorreto.forEach(b => {
+            if (b.data_peso > maxOrdem) maxOrdem = b.data_peso;
+        });
+
+        _ordemExibicao = maxOrdem + 1;
     }
 
     const dados = {

@@ -1,17 +1,19 @@
-//Ultilitarios do projeto
+// Utilitários do projeto
 import * as db from './data/database.js';
 import * as auth from './data/auth.js';
 import * as grid from './data/gridstackmanager.js';
 import * as sort from './data/sortablejsmanager.js';
 import * as edit from './data/editor.js';
 import * as user from './data/userpanel.js';
-//Funções do projeto
+// Funções do projeto
 import * as despacho from './data/despacho.js';
 import * as categ from './data/categ.js';
 import * as form from './data/formulario.js';
 import * as comp from './data/complemento.js';
 import * as naturezas from './data/naturezas.js';
 import * as global from './data/global.js';
+
+window.db = db;
 
 window.EstadoFluxo = Object.freeze({
     FORMULANDO: "formulando",
@@ -27,12 +29,11 @@ window.estadoAtual = window.EstadoFluxo.FORMULANDO;
 // =====================================================
 
 window.onload = async () => {
-
     aplicarTemaInicial();
 
     await db.carregarCategorias();
     await db.carregarNaturezasCopom();
-    
+
     inicializarResizer();
     window.atualizarFormulario();
     registrarEventos();
@@ -44,19 +45,19 @@ window.onload = async () => {
 // UPDATE
 // =====================================================
 
-let timeoutFormulario; 
+let timeoutFormulario;
 window.atualizarFormulario = function() {
     clearTimeout(timeoutFormulario);
     timeoutFormulario = setTimeout(() => {
-        window.atualizarOcultados();
-        window.gerarDespacho(); 
+        window.atualizarOcultados?.();
+        window.gerarDespacho?.();
     }, 200);
-}
+};
 
 //#region EventHandlers
 // =====================================================
 
-window.registrar = function(id,evento,callback){
+window.registrar = function(id, evento, callback) {
     const el = document.getElementById(id);
 
     if (!el) {
@@ -68,17 +69,17 @@ window.registrar = function(id,evento,callback){
         return;
     }
 
-    el.addEventListener(evento,callback);
-}
-function registrarEventos() {
+    el.addEventListener(evento, callback);
+};
 
-    window.registrarAuthEventos();
-    window.registrarNaturezaEventos();
-    window.registrarCategEvento(db);
-    window.registrarComplementoEventos(db);
-    window.registrarEditorEventos();
-    window.registrarDespachoEventos();
-    window.registrarUserEventos();
+function registrarEventos() {
+    window.registrarAuthEventos?.();
+    window.registrarNaturezaEventos?.();
+    window.registrarCategEvento?.(db);
+    window.registrarComplementoEventos?.(db);
+    window.registrarEditorEventos?.();
+    window.registrarDespachoEventos?.();
+    window.registrarUserEventos?.();
 
     // =====================================
     // EVENTOS GLOBAIS
@@ -87,17 +88,16 @@ function registrarEventos() {
     window.registrar("btnTema", "click", alternarTema);
 
     document.addEventListener('click', (e) => {
-
         // --- LÓGICA DO AUTOCOMPLETE ABAIXO --- //
         const painelSugestoes = document.getElementById('sugestoesNaturezas');
         const inputNatureza = document.getElementById('buscarNatureza');
         const sugestao = e.target.closest('.sugestao-item-busca');
-        
+
         if (sugestao) {
             const naturezaSelecionada = sugestao.dataset.natureza;
-            inputNatureza.value = naturezaSelecionada;
-            painelSugestoes.style.display = "none";
-            window.naturezaRelacionada = window.obterNatureza(naturezaSelecionada);
+            if (inputNatureza) inputNatureza.value = naturezaSelecionada;
+            if (painelSugestoes) painelSugestoes.style.display = "none";
+            window.naturezaRelacionada = window.obterNatureza?.(naturezaSelecionada) || null;
             console.log(`Natureza vinculada: | ID: ${window.naturezaRelacionada?.id} | NATUREZA: ${window.naturezaRelacionada?.natureza} |`);
         }
 
@@ -107,7 +107,6 @@ function registrarEventos() {
             }
         }
     });
-
 }
 // =====================================================
 //#endregion
@@ -115,7 +114,7 @@ function registrarEventos() {
 //#region TEMA
 // =====================================================
 
-function alternarTema(){
+function alternarTema() {
     const body = document.body;
     const botao = document.getElementById("btnTema");
     const indoParaEscuro = body.getAttribute("data-theme") !== "dark";
@@ -134,8 +133,6 @@ function alternarTema(){
         }
     };
 
-    // Marca o ponto de origem (posição do botão) para a animação
-    // circular de revelação ao trocar de tema.
     if (botao) {
         const rect = botao.getBoundingClientRect();
         const x = rect.left + rect.width / 2;
@@ -152,8 +149,8 @@ function alternarTema(){
         aplicarNovoTema();
     }
 }
-function aplicarTemaInicial() {
 
+function aplicarTemaInicial() {
     const btn = document.getElementById("btnTema");
     const escuro = localStorage.getItem("theme") === "dark";
 
@@ -174,29 +171,19 @@ function aplicarTemaInicial() {
 
 function inicializarResizer() {
     const layout = document.getElementById("htmlBody");
-    
-    // Referências das Colunas (Apenas Centro e Direita agora)
+
     const bodyFormulario = document.getElementById("bodyFormulario");
     const bodyDespacho = document.getElementById("bodyDespacho");
-    
-    // Referências dos Resizers
     const resizerDespacho = document.getElementById("resizerDespacho");
 
     if (!layout || !bodyFormulario || !bodyDespacho) return;
 
-    // Configurações de limite
-    const MIN_LATERAL = 250; 
-    const MIN_CENTRO = 350;  
+    const MIN_LATERAL = 250;
+    const MIN_CENTRO = 350;
 
     bodyFormulario.style.width = "";
-    bodyDespacho.style.width = ""; 
+    bodyDespacho.style.width = "";
 
-    // ==========================================
-    // LAYOUT RESPONSIVO: abaixo do breakpoint de
-    // empilhamento, limpa qualquer largura fixa
-    // aplicada manualmente para que a coluna use
-    // 100% da largura (regra definida em CSS).
-    // ==========================================
     const BREAKPOINT_EMPILHAR = 1250;
     const sincronizarLayoutResponsivo = () => {
         if (window.innerWidth <= BREAKPOINT_EMPILHAR) {
@@ -207,19 +194,15 @@ function inicializarResizer() {
     window.addEventListener("resize", sincronizarLayoutResponsivo);
     sincronizarLayoutResponsivo();
 
-    // ==========================================
-    // LÓGICA DO RESIZER DIREITO (Despacho)
-    // ==========================================
     if (resizerDespacho && bodyDespacho) {
         let startX, startWidth, maxWidth;
-        
+
         const onMouseMoveDespacho = (e) => {
-            let newWidth = startWidth - (e.clientX - startX); // Invertido porque arrasta para a esquerda
-            
+            let newWidth = startWidth - (e.clientX - startX);
             newWidth = Math.max(MIN_LATERAL, Math.min(newWidth, maxWidth));
             bodyDespacho.style.width = `${newWidth}px`;
         };
-        
+
         const onMouseUpDespacho = () => {
             document.removeEventListener("mousemove", onMouseMoveDespacho);
             document.removeEventListener("mouseup", onMouseUpDespacho);
@@ -230,14 +213,13 @@ function inicializarResizer() {
         resizerDespacho.addEventListener("mousedown", (e) => {
             startX = e.clientX;
             startWidth = bodyDespacho.getBoundingClientRect().width;
-            
-            // Calcula o máximo que pode crescer pegando o espaço atual do centro
+
             const centroWidth = bodyFormulario.getBoundingClientRect().width;
             maxWidth = startWidth + (centroWidth - MIN_CENTRO);
-            
+
             document.body.style.cursor = "col-resize";
             document.body.style.userSelect = "none";
-            
+
             document.addEventListener("mousemove", onMouseMoveDespacho);
             document.addEventListener("mouseup", onMouseUpDespacho);
         });
@@ -251,33 +233,28 @@ window.PainelRegistro = function(mostrar) {
     if (!painelRegistro || !botoesRegistro) return;
 
     if (mostrar) {
-        // Exibe o painel em background primeiro
         painelRegistro.style.display = "flex";
         botoesRegistro.style.display = "flex";
-        
-        // Pequeno delay para acionar a transição CSS de Topo para Baixo
+
         setTimeout(() => {
             painelRegistro.classList.add("visivel");
             botoesRegistro.classList.add("visivel");
         }, 10);
-
     } else {
-        // Envia o painel pra cima e esconde os botões
         painelRegistro.classList.remove("visivel");
         botoesRegistro.classList.remove("visivel");
-        
-        // Aguarda a animação acabar para ocultar e resetar as posições arrastadas
+
         setTimeout(() => {
             painelRegistro.style.display = "none";
             botoesRegistro.style.display = "none";
-            
-            // Reseta a posição embutida pelo "Drag&Drop" para a posição inicial de fábrica
+
             painelRegistro.style.top = "";
             painelRegistro.style.left = "";
-            painelRegistro.style.transform = ""; 
-        }, 400); 
+            painelRegistro.style.transform = "";
+        }, 400);
     }
-}
+};
+
 window.alternarColuneDireita = function(mostrarColunaDir) {
     const duasColunas = document.querySelector("#cardRegistro .painel-duas-colunas");
     const painelFlutuante = document.querySelector(".painel-flutuante");
@@ -288,16 +265,17 @@ window.alternarColuneDireita = function(mostrarColunaDir) {
     painelFlutuante?.classList.toggle("painel-compacto", !mostrarColunaDir);
 };
 
-window.PainelEdicao = function(mostrar, tempOccult = false){
+window.PainelEdicao = function(mostrar, tempOccult = false) {
     const botoesEditor = document.getElementById("painelBotoesEdicao");
 
     if (mostrar) {
         window.alterarVisibilidadeElemento("btnModoEdicao", false);
-        botoesEditor.style.display = "flex";
-        setTimeout(() => {
-            botoesEditor.classList.add("visivel");
-        }, 10);
-
+        if (botoesEditor) {
+            botoesEditor.style.display = "flex";
+            setTimeout(() => {
+                botoesEditor.classList.add("visivel");
+            }, 10);
+        }
     } else {
         const permissao = Number(window.nivelPermissaoUsuario) || 0;
         console.log("Checando permissão para exibir btnModoEdicao:", permissao);
@@ -306,29 +284,31 @@ window.PainelEdicao = function(mostrar, tempOccult = false){
             window.alterarVisibilidadeElemento("btnModoEdicao", true);
         }
 
-        botoesEditor.classList.remove("visivel");
-        setTimeout(() => {
-            botoesEditor.style.display = "none";
-        }, 400); 
+        if (botoesEditor) {
+            botoesEditor.classList.remove("visivel");
+            setTimeout(() => {
+                botoesEditor.style.display = "none";
+            }, 400);
+        }
     }
-}
+};
 
 window.entrarModoRegistro = function({ colunaDir = false, grid = false } = {}) {
     window.PainelRegistro(true);
     window.alternarColuneDireita(colunaDir);
 
     if (grid) {
-        window.ativarGrid();
+        window.ativarGrid?.();
         if (window.grid) {
             window.grid.enableMove(true);
             window.grid.enableResize(true);
         }
     }
 
-    window.ativarOutlines();
-    window.ativarSortDrag();
-    window.bloquearCateg(true);
-    window.desabilitarBotoesAcoes();
+    window.ativarOutlines?.();
+    window.ativarSortDrag?.();
+    window.bloquearCateg?.(true);
+    window.desabilitarBotoesAcoes?.();
 };
 
 window.sairModoRegistro = function({ grid = false } = {}) {
@@ -336,17 +316,17 @@ window.sairModoRegistro = function({ grid = false } = {}) {
     window.alternarColuneDireita(false);
 
     if (grid) {
-        window.desativarGrid();
+        window.desativarGrid?.();
         if (window.grid) {
             window.grid.enableMove(false);
             window.grid.enableResize(false);
         }
     }
 
-    window.desativarOutlines();
-    window.desativarSortDrag();
-    window.bloquearCateg(false);
-    window.habilitarBotoesAcoes();
+    window.desativarOutlines?.();
+    window.desativarSortDrag?.();
+    window.bloquearCateg?.(false);
+    window.habilitarBotoesAcoes?.();
 };
 
 // =====================================================
@@ -355,26 +335,26 @@ window.sairModoRegistro = function({ grid = false } = {}) {
 //#region Funções de uso Geral.
 // =====================================================
 
-window.resetarCategoria = function(){
-    window.listaDeCategorias = [];
+window.resetarCategoria = function() {
     window.categoriaSelecionada = null;
     db.carregarCategorias();
-}
-window.resetarFormulario = function(){
-    window.limparGrid();
-    if(window.estadoAtual === EstadoFluxo.EDITANDO) {
-        return; 
+};
+
+window.resetarFormulario = function() {
+    window.limparGrid?.();
+    if (window.estadoAtual === EstadoFluxo.EDITANDO) {
+        return;
     }
-    window.desativarGrid();
+    window.desativarGrid?.();
     if (window.grid) {
         window.grid.enableMove(false);
         window.grid.enableResize(false);
     }
-    window.desativarOutlines();
-    window.desativarSortDrag();
-}
+    window.desativarOutlines?.();
+    window.desativarSortDrag?.();
+};
 
-window.alterarVisibilidadeElemento = function(id, condicao){
+window.alterarVisibilidadeElemento = function(id, condicao) {
     const el = document.getElementById(id);
     if (!el) return;
 
@@ -393,7 +373,7 @@ window.alterarVisibilidadeElemento = function(id, condicao){
             }
         });
     }
-}
+};
 
 let toastTimeout = null;
 export function mostrarToast(mensagem, duracao = 2000) {

@@ -41,7 +41,7 @@ window.registrarCategEvento = function(db) {
     });
 
     window.registrar("categoria", "change", (e) => window.onCategChange(e, db));
-    // registro de nova categoria
+    // Registro de nova categoria
     window.registrar("btnNovaCategoria", "click", () => window.exibirNovaCategoria());
     window.registrar("categoriaNome", "input", () => window.updateCategoriaNome());
     window.registrar("inputCategResultado", "input", () => window.updateCategoriaTexto());
@@ -58,6 +58,14 @@ function normalizarTextoCateg(texto = "") {
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase()
         .trim();
+}
+
+function extrairIdValido(valor) {
+    if (valor === null || valor === undefined || typeof valor === "object") return null;
+    const str = String(valor).trim();
+    if (!/^\d+$/.test(str)) return null;
+    const num = Number(str);
+    return Number.isSafeInteger(num) && num > 0 ? num : null;
 }
 
 function abrirSugestoesCategoria() {
@@ -80,19 +88,20 @@ async function selecionarCategoriaPorObjeto(cat, database = null, opcoes = {}) {
     const { manterTextoInput = false, carregarDados = true } = opcoes;
     const input = document.getElementById("categoria");
 
-    if (cat) {
-        window.categoriaSelecionada = cat;
+    if (cat && extrairIdValido(cat.id)) {
+        const idLimpo = extrairIdValido(cat.id);
+        window.categoriaSelecionada = { ...cat, id: idLimpo };
         if (input) {
             input.value = cat.nome;
-            input.dataset.selectedId = String(cat.id);
+            input.dataset.selectedId = String(idLimpo);
         }
         fecharSugestoesCategoria();
 
         if (carregarDados) {
-            await window.onCategChange({ target: { value: String(cat.id) } }, database);
+            await window.onCategChange({ target: { value: String(idLimpo) } }, database);
         }
     } else {
-        const tinhaSelecao = Boolean(window.categoriaSelecionada || input?.dataset.selectedId);
+        const tinhaSelecao = Boolean(window.categoriaSelecionada?.id || input?.dataset.selectedId);
         window.categoriaSelecionada = null;
         if (input) {
             input.dataset.selectedId = "";
@@ -119,7 +128,7 @@ window.bloquearCateg = function(ativar) {
 window.temCategoria = function() {
     const input = document.getElementById("categoria");
     if (!input) return false;
-    return Boolean(window.categoriaSelecionada?.id || input.dataset.selectedId);
+    return Boolean(extrairIdValido(window.categoriaSelecionada?.id) || extrairIdValido(input.dataset.selectedId));
 };
 
 window.renderizarSelectCategorias = function(criterio = _criterioOrdenacaoCategoria, termoBusca = null) {
@@ -150,7 +159,7 @@ window.renderizarSelectCategorias = function(criterio = _criterioOrdenacaoCatego
     if (_criterioOrdenacaoCategoria === "nome") {
         categoriasFiltradas.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" }));
     } else if (_criterioOrdenacaoCategoria === "id") {
-        categoriasFiltradas.sort((a, b) => a.id - b.id);
+        categoriasFiltradas.sort((a, b) => Number(a.id) - Number(b.id));
     }
 
     lista.innerHTML = "";
@@ -166,11 +175,14 @@ window.renderizarSelectCategorias = function(criterio = _criterioOrdenacaoCatego
     }
 
     categoriasFiltradas.forEach(cat => {
+        const idValido = extrairIdValido(cat.id);
+        if (!idValido) return;
+
         const item = document.createElement("button");
         item.type = "button";
         item.className = "categoria-sugestao-item";
         item.setAttribute("role", "option");
-        item.dataset.id = String(cat.id);
+        item.dataset.id = String(idValido);
 
         const titulo = document.createElement("span");
         titulo.className = "categoria-sugestao-nome";
@@ -189,7 +201,7 @@ window.renderizarSelectCategorias = function(criterio = _criterioOrdenacaoCatego
 
         item.addEventListener("click", async () => {
             const dbRef = window.db || window.database || null;
-            await selecionarCategoriaPorObjeto(cat, dbRef, { manterTextoInput: false, carregarDados: true });
+            await selecionarCategoriaPorObjeto({ ...cat, id: idValido }, dbRef, { manterTextoInput: false, carregarDados: true });
         });
 
         lista.appendChild(item);
@@ -198,15 +210,18 @@ window.renderizarSelectCategorias = function(criterio = _criterioOrdenacaoCatego
 
 window.onCategChange = async function(e, database) {
     const btn = document.getElementById("btnComplemento");
-    const valorSelecionado = e?.target?.value ?? "";
+    const input = document.getElementById("categoria");
+    const valorBruto = e?.target?.value ?? input?.dataset?.selectedId ?? window.categoriaSelecionada?.id ?? "";
+    const idNum = extrairIdValido(valorBruto);
     const db = database || window.db || window.database || null;
 
-    if (valorSelecionado !== "") {
-        const idNum = Number(valorSelecionado);
+    if (idNum) {
+        window.categoriaSelecionada = (window.listaDeCategorias || []).find(cat => extrairIdValido(cat.id) === idNum) || null;
+        if (input) {
+            input.dataset.selectedId = String(idNum);
+        }
 
-        window.categoriaSelecionada = window.listaDeCategorias.find(cat => cat.id === idNum) || null;
-        const allowComplement = btn && (window.nivelPermissaoUsuario >= 2);
-
+        const allowComplement = Boolean(btn && (window.nivelPermissaoUsuario >= 2));
         window.alterarVisibilidadeElemento?.("btnComplemento", allowComplement);
 
         const fnCarregar =
@@ -224,6 +239,9 @@ window.onCategChange = async function(e, database) {
         return;
     } else {
         window.categoriaSelecionada = null;
+        if (input) {
+            input.dataset.selectedId = "";
+        }
         window.alterarVisibilidadeElemento?.("btnComplemento", false);
         window.alterarVisibilidadeElemento?.("camposDinamicos", false);
         window.fecharNovoComplemento?.();
@@ -333,7 +351,7 @@ window.updateCategoriaTexto = function() {
     }
 
     const inputCategResultado = document.getElementById("inputCategResultado");
-    textoNovaCategoria = inputCategResultado ? inputCategResultado.value.trim() : "";
+    window.textoNovaCategoria = inputCategResultado ? inputCategResultado.value.trim() : "";
     window.atualizarFormulario();
 };
 
@@ -344,7 +362,7 @@ window.entregarDadosNovaCategoria = function() {
     const blocoFantasma = document.querySelector('.text-piece[data-card-id="bloco_categoria_output"]');
 
     if (blocoFantasma) {
-        _ordemContexto = parseInt(blocoFantasma.getAttribute('data-ordem-contexto') || 0);
+        _ordemContexto = parseInt(blocoFantasma.getAttribute('data-ordem-contexto') || 0, 10);
         _ordemExibicao = parseFloat(blocoFantasma.getAttribute('data-peso') || 0);
     }
 

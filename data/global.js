@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const atualizarTudo = () => {
-        window.atualizarDisplayGlobais();
-        window.atualizarSufixosVisuais();
+        window.atualizarDisplayGlobais?.();
+        window.atualizarSufixosVisuais?.();
     };
 
     const selectSolicita = document.getElementById('solicita');
@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const obterRodape = () => {
-        const rawValue = selectSolicita?.value ?? document.getElementById('solicita')?.value ?? "";
-        let solicita = rawValue.replace(/\s+/g, ' ').trim();
+        const rawValue = document.getElementById('solicita')?.value ?? "";
+        const solicita = rawValue.replace(/\s+/g, ' ').trim();
         if (!solicita) return "";
         return solicita.endsWith('.') ? solicita : `${solicita}.`;
     };
@@ -94,7 +94,7 @@ window.renderizarSelectSolicitacao = () => {
     const valorAtual = select.value;
     select.innerHTML = '<option value="">-- Solicitação --</option>';
 
-    window.solicitacoes.forEach(({ texto }) => {
+    (window.solicitacoes || []).forEach(({ texto }) => {
         const option = document.createElement('option');
         const textoLimpo = String(texto ?? '').replace(/\s+/g, ' ').trim();
         option.value = textoLimpo;

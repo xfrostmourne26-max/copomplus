@@ -3,16 +3,34 @@ const SUPABASE_KEY = "sb_publishable_sr2AxvtVjV6jQGjj-lXCVw_hX2AJUBO";
 export const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ==========================================
+// HELPERS DE VALIDAÇÃO (BIGINT / IDs)
+// ==========================================
+function parseIdBigInt(valor) {
+    if (valor === null || valor === undefined) return null;
+    if (typeof valor === "boolean" || typeof valor === "object") return null;
+
+    const str = String(valor).trim();
+    if (!/^\d+$/.test(str)) return null;
+
+    const num = Number(str);
+    if (!Number.isSafeInteger(num) || num <= 0) return null;
+
+    return num;
+}
+
+// ==========================================
 // UTILS
 // ==========================================
 export async function getSessaoAtual() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     return session;
 }
+
 async function getUsuarioIdLogado() {
     const session = await getSessaoAtual();
     return session?.user?.id || null;
 }
+
 export async function getNomePeloUUID(uuid) {
     if (!uuid) return "Sistema";
     try {
@@ -94,16 +112,16 @@ window.getTodasAtividades = async function() {
 
     let tudo = [];
 
-    if(cat.data) cat.data.forEach(i => tudo.push({...i, tipo_base: 'Categoria'}));
-    if(campos.data) campos.data.forEach(i => {
-        tudo.push({...i, tipo_base: 'Campo', sub_tipo: i.tipo_campo, categoria_nome: mapaCategorias[i.categoria_id]});
+    if (cat.data) cat.data.forEach(i => tudo.push({ ...i, tipo_base: 'Categoria' }));
+    if (campos.data) campos.data.forEach(i => {
+        tudo.push({ ...i, tipo_base: 'Campo', sub_tipo: i.tipo_campo, categoria_nome: mapaCategorias[i.categoria_id] });
     });
-    if(listas.data) listas.data.forEach(i => {
-        tudo.push({...i, tipo_base: 'Lista de Formulário', categoria_nome: mapaCategorias[i.categoria_id]});
+    if (listas.data) listas.data.forEach(i => {
+        tudo.push({ ...i, tipo_base: 'Lista de Formulário', categoria_nome: mapaCategorias[i.categoria_id] });
     });
-    if(opcoes.data) opcoes.data.forEach(i => {
+    if (opcoes.data) opcoes.data.forEach(i => {
         const idDaCategoria = mapaListas[i.dropdown_id];
-        tudo.push({...i, tipo_base: 'Opção de Lista', categoria_nome: mapaCategorias[idDaCategoria]});
+        tudo.push({ ...i, tipo_base: 'Opção de Lista', categoria_nome: mapaCategorias[idDaCategoria] });
     });
 
     return tudo;
@@ -211,23 +229,25 @@ export async function salvarNovaCategoria() {
         window.mostrarToast("Ação não autorizada.");
         return false;
     }
-    
-    const dados = window.entregarDadosNovaCategoria();
 
-    if (!dados.nomeCateg){
-        window.mostrarToast("Preencha o Nome da Categoria."); 
+    const dados = typeof window.entregarDadosNovaCategoria === "function"
+        ? window.entregarDadosNovaCategoria()
+        : null;
+
+    if (!dados?.nomeCateg) {
+        window.mostrarToast("Preencha o Nome da Categoria.");
         return false;
     }
 
     try {
         const usuarioAtualId = await getUsuarioIdLogado();
         const payloadCateg = {
-            nome: dados.nomeCateg, 
+            nome: dados.nomeCateg,
             texto_output: dados.textoResultado,
-            data_contexto: dados.ordemContexto, 
-            data_peso: dados.ordemExibicao, 
+            data_contexto: dados.ordemContexto,
+            data_peso: dados.ordemExibicao,
             criado_por: usuarioAtualId,
-            natureza_id: dados.natureza
+            natureza_id: parseIdBigInt(dados.natureza)
         };
 
         const { data: novaCateg, error: errCateg } = await supabaseClient
@@ -237,28 +257,42 @@ export async function salvarNovaCategoria() {
             .single();
 
         if (errCateg) throw errCateg;
-        
+
         await carregarCategorias();
         window.mostrarToast("Categoria Registrada!");
         return true;
     } catch (error) {
-        alert(`Erro ao salvar no Categoria no banco: ${error.message || error}`);
+        alert(`Erro ao salvar Categoria no banco: ${error.message || error}`);
         return false;
     }
 }
 
 export async function salvarNovoComplemento() {
     if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 2) {
-        window.mostrarToast("Ação não autorizada."); 
+        window.mostrarToast("Ação não autorizada.");
         return false;
     }
 
-    const dados = window.entregarDadosDoComplemento();
+    const dados = typeof window.entregarDadosDoComplemento === "function"
+        ? window.entregarDadosDoComplemento()
+        : null;
+
+    if (!dados) {
+        window.mostrarToast("Não foi possível ler os dados do formulário.");
+        return false;
+    }
+
+    const categoriaIdInt = parseIdBigInt(dados.categoriaId);
+    if (!categoriaIdInt) {
+        console.error("categoriaId inválido em salvarNovoComplemento:", dados.categoriaId, dados);
+        window.mostrarToast("Selecione uma Categoria válida antes de salvar.");
+        return false;
+    }
 
     const ehListaNova = dados.tipoCampo === "dropdown" && dados.novoDropdown;
 
     if (ehListaNova) {
-        if (!dados.categoriaId || !dados.nomeNovoDropdown) {
+        if (!dados.nomeNovoDropdown) {
             window.mostrarToast("Preencha Categoria e o Nome da Lista!");
             return false;
         }
@@ -271,54 +305,63 @@ export async function salvarNovoComplemento() {
             return false;
         }
     } else {
-        if (!dados.categoriaId || !dados.tipoCampo || !dados.nomeCampo) {
-            window.mostrarToast("Preencha Categoria, Tipo e Nome!"); 
+        if (!dados.tipoCampo || !dados.nomeCampo) {
+            window.mostrarToast("Preencha Categoria, Tipo e Nome!");
             return false;
         }
     }
 
-    let registroCriado = { tipo: null, id: null, idListaRelacionada: null, idsOpcoesExtras: [] }; 
+    let registroCriado = { tipo: null, id: null, idListaRelacionada: null, idsOpcoesExtras: [] };
 
     try {
         const usuarioAtualId = await getUsuarioIdLogado();
         let resultado = { sucesso: false };
 
         if (dados.tipoCampo === "dropdown") {
-            resultado = await salvarLista(dados, usuarioAtualId);
+            resultado = await salvarLista({ ...dados, categoriaId: categoriaIdInt }, usuarioAtualId);
         } else {
-            resultado = await salvarCampo(dados, usuarioAtualId);
+            resultado = await salvarCampo({ ...dados, categoriaId: categoriaIdInt }, usuarioAtualId);
         }
 
         if (resultado.sucesso && resultado.novoCampo) {
-            registroCriado = { 
-                tipo: dados.tipoCampo, 
+            registroCriado = {
+                tipo: dados.tipoCampo,
                 id: resultado.novoCampo.id,
                 idListaRelacionada: resultado.idListaRelacionada || null,
-                idsOpcoesExtras: (resultado.opcoesInseridas || []).slice(1).map(o => o.id) // NOVO
-            }; 
+                idsOpcoesExtras: (resultado.opcoesInseridas || []).slice(1).map(o => o.id)
+            };
 
             if (dados.tipoCampo === "dropdown") {
-                window.mostrarToast(resultado.listaExistente ? "Opção(ões) registrada(s) e textos reordenados!" : "Nova Lista registrada e textos reordenados!");
+                window.mostrarToast(
+                    resultado.listaExistente
+                        ? "Opção(ões) registrada(s) e textos reordenados!"
+                        : "Nova Lista registrada e textos reordenados!"
+                );
             } else {
                 window.mostrarToast("Novo Campo registrado e textos reordenados!");
             }
 
-            window.limparPagina(true);
-            await carregarDadosDaCategoria();
+            if (typeof window.limparPagina === "function") {
+                window.limparPagina(true);
+            }
+            await carregarDadosDaCategoria(categoriaIdInt);
             return true;
         }
 
+        return false;
     } catch (error) {
         console.error("Erro no salvamento:", error);
-        
+
         if (registroCriado.id) {
-            console.log(`Rollback: Deletando registro incompleto...`);
+            console.log("Rollback: Deletando registro incompleto...");
             if (registroCriado.tipo === "dropdown") {
                 await supabaseClient.from('lista_opcao').delete().eq('id', registroCriado.id);
                 if (registroCriado.idsOpcoesExtras?.length) {
                     await supabaseClient.from('lista_opcao').delete().in('id', registroCriado.idsOpcoesExtras);
                 }
-                if (registroCriado.idListaRelacionada) await supabaseClient.from('lista_formulario').delete().eq('id', registroCriado.idListaRelacionada);
+                if (registroCriado.idListaRelacionada) {
+                    await supabaseClient.from('lista_formulario').delete().eq('id', registroCriado.idListaRelacionada);
+                }
             } else {
                 await supabaseClient.from('campos_formulario').delete().eq('id', registroCriado.id);
             }
@@ -329,29 +372,35 @@ export async function salvarNovoComplemento() {
 }
 
 async function salvarCampo(dados, idUsuario) {
-    // sem mudanças
     if (!dados) {
-        alert(`Dados não recebidos para criação do Campo`);
+        alert("Dados não recebidos para criação do Campo");
+        return { sucesso: false };
+    }
+
+    const categoriaIdInt = parseIdBigInt(dados.categoriaId);
+    if (!categoriaIdInt) {
+        console.error("categoriaId inválido em salvarCampo:", dados.categoriaId, dados);
+        alert("Erro: ID da categoria inválido (NaN). Recarregue a página ou selecione outra categoria.");
         return { sucesso: false };
     }
 
     try {
         const payloadCampo = {
-            categoria_id: parseInt(dados.categoriaId),
-            nome_campo: dados.nomeCampo, 
+            categoria_id: categoriaIdInt,
+            nome_campo: dados.nomeCampo,
             tipo_campo: dados.tipoCampo,
             texto_output: dados.textoResultado,
             aditivo_texto: dados.aditivoTexto,
             aditivo_posicao: dados.aditivoPosicao,
-            data_contexto: dados.ordemContexto, 
-            data_peso: dados.ordemExibicao, 
+            data_contexto: dados.ordemContexto,
+            data_peso: dados.ordemExibicao,
             oculto_ate: dados.ocultoAte || null,
             grid_x: dados.gridX,
             grid_y: dados.gridY,
             grid_w: dados.gridW,
             grid_h: dados.gridH,
             criado_por: idUsuario,
-            natureza_id: dados.natureza
+            natureza_id: parseIdBigInt(dados.natureza)
         };
 
         const { data: novoCampo, error: errCampo } = await supabaseClient
@@ -361,7 +410,7 @@ async function salvarCampo(dados, idUsuario) {
             .single();
 
         if (errCampo) throw errCampo;
-        
+
         return { sucesso: true, novoCampo };
     } catch (error) {
         alert(`Erro ao salvar Campo no banco: ${error.message || error}`);
@@ -371,21 +420,33 @@ async function salvarCampo(dados, idUsuario) {
 
 async function salvarLista(dados, idUsuario) {
     if (!dados) {
-        alert(`Dados não recebidos para criação da Lista`);
+        alert("Dados não recebidos para criação da Lista");
         return { sucesso: false };
     }
+
+    const categoriaIdInt = parseIdBigInt(dados.categoriaId);
+    if (!categoriaIdInt) {
+        console.error("categoriaId inválido em salvarLista:", dados.categoriaId, dados);
+        alert("Erro ao salvar Lista no banco: categoria_id inválido (NaN).");
+        return { sucesso: false };
+    }
+
+    const nomeLista = (dados.nomeDroproot ?? dados.nomeNovoDropdown ?? "").trim();
+    if (!nomeLista) {
+        alert("Erro ao salvar Lista no banco: nome da lista não informado.");
+        return { sucesso: false };
+    }
+
+    let idListaCriadaParaRollback = null;
 
     try {
         let dropdownId = null;
         let listaExistente = false;
-        let idListaCriadaParaRollback = null;
-
-        const categoriaIdInt = parseInt(dados.categoriaId);
 
         const { data: listaExistenteData, error: errCheck } = await supabaseClient
             .from('lista_formulario')
             .select('id')
-            .eq('valor_opcao', dados.nomeDroproot)
+            .eq('valor_opcao', nomeLista)
             .eq('categoria_id', categoriaIdInt)
             .maybeSingle();
 
@@ -397,7 +458,7 @@ async function salvarLista(dados, idUsuario) {
         } else {
             // A regra de ocultamento (oculto_ate) fica só na LISTA - nunca nas opções abaixo
             const payloadLista = {
-                valor_opcao: dados.nomeDroproot,
+                valor_opcao: nomeLista,
                 categoria_id: categoriaIdInt,
                 oculto_ate: dados.ocultoAte || null,
                 grid_x: dados.gridX,
@@ -427,7 +488,7 @@ async function salvarLista(dados, idUsuario) {
                 data_contexto: op.ordemContexto,
                 data_peso: op.ordemExibicao,
                 criado_por: idUsuario,
-                natureza_id: op.naturezaId || null,
+                natureza_id: parseIdBigInt(op.naturezaId),
                 aditivo_texto: op.aditivoTexto || null,
                 aditivo_posicao: op.aditivoPosicao || null
             }))
@@ -438,7 +499,7 @@ async function salvarLista(dados, idUsuario) {
                 data_contexto: dados.ordemContexto,
                 data_peso: dados.ordemExibicao,
                 criado_por: idUsuario,
-                natureza_id: dados.natureza,
+                natureza_id: parseIdBigInt(dados.natureza),
                 aditivo_texto: dados.aditivoTexto || null,
                 aditivo_posicao: dados.aditivoPosicao || null
             }];
@@ -448,27 +509,23 @@ async function salvarLista(dados, idUsuario) {
             .insert(opcoesParaInserir)
             .select();
 
-        if (errOpcao) {
-            if (idListaCriadaParaRollback) {
-                await supabaseClient.from('lista_formulario').delete().eq('id', idListaCriadaParaRollback);
-            }
-            throw errOpcao;
-        }
-        
-        return { 
-            sucesso: true, 
-            novoCampo: opcoesInseridas[0],
-            opcoesInseridas, // NOVO
-            idListaRelacionada: idListaCriadaParaRollback,
-            listaExistente: listaExistente 
-        };
+        if (errOpcao) throw errOpcao;
 
+        return {
+            sucesso: true,
+            novoCampo: opcoesInseridas[0],
+            opcoesInseridas,
+            idListaRelacionada: idListaCriadaParaRollback,
+            listaExistente
+        };
     } catch (error) {
+        if (idListaCriadaParaRollback) {
+            await supabaseClient.from('lista_formulario').delete().eq('id', idListaCriadaParaRollback);
+        }
         alert(`Erro ao salvar Lista no banco: ${error.message || error}`);
         return { sucesso: false };
     }
 }
-
 
 // ==========================================
 //#endregion
@@ -503,13 +560,14 @@ export async function carregarIndiceBuscaCategorias() {
 
         const termosPorCategoria = new Map();
         const addTermo = (catId, ...valores) => {
-            if (!catId) return;
-            const atual = termosPorCategoria.get(catId) || [];
+            const catIdInt = parseIdBigInt(catId);
+            if (!catIdInt) return;
+            const atual = termosPorCategoria.get(catIdInt) || [];
             valores.forEach(v => {
                 const norm = normalizarBusca(v);
                 if (norm) atual.push(norm);
             });
-            termosPorCategoria.set(catId, atual);
+            termosPorCategoria.set(catIdInt, atual);
         };
 
         const listaParaCategoria = new Map();
@@ -528,7 +586,7 @@ export async function carregarIndiceBuscaCategorias() {
         });
 
         window.listaDeCategorias = (window.listaDeCategorias || []).map(cat => {
-            const termosExtras = termosPorCategoria.get(cat.id) || [];
+            const termosExtras = termosPorCategoria.get(parseIdBigInt(cat.id)) || [];
             const termosCompletos = [
                 normalizarBusca(cat.nome),
                 normalizarBusca(cat.texto_output),
@@ -568,20 +626,16 @@ window.renderizarSelectCategorias = function(criterio = 'nome') {
     if (!select) return;
 
     const valorAtual = select.value;
-    let categoriasOrdenadas = [...window.listaDeCategorias];
+    let categoriasOrdenadas = [...(window.listaDeCategorias || [])];
 
     if (criterio === 'nome') {
         categoriasOrdenadas.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
-    } 
-    else if (criterio === 'id') {
-        categoriasOrdenadas.sort((a, b) => a.id - b.id);
-    } 
-    // else if (criterio === 'ordem') {
-    //     categoriasOrdenadas.sort((a, b) => (a.data_peso || 0) - (b.data_peso || 0));
-    // }
+    } else if (criterio === 'id') {
+        categoriasOrdenadas.sort((a, b) => Number(a.id) - Number(b.id));
+    }
 
     select.innerHTML = '<option value="">-- Selecione uma Categoria --</option>';
-    
+
     categoriasOrdenadas.forEach(cat => {
         const opt = document.createElement("option");
         opt.value = cat.id;
@@ -589,21 +643,26 @@ window.renderizarSelectCategorias = function(criterio = 'nome') {
         select.appendChild(opt);
     });
 
-    select.value = valorAtual;
+    if ([...select.options].some(o => o.value === valorAtual)) {
+        select.value = valorAtual;
+    } else {
+        select.value = "";
+    }
 };
 
 export async function carregarDadosDaCategoria(categoriaIdParam = null) {
     window.camposDaCategoria = [];
     window.listasDaCategoria = [];
 
-    const categoriaId = categoriaIdParam || document.getElementById("categoria")?.value;
-    
-    if (!categoriaId) { 
-        console.log("Categoria não encontrada!");
-        if (typeof window.limparGrid === 'function'){
+    const rawCategoriaId = categoriaIdParam ?? document.getElementById("categoria")?.value;
+    const categoriaId = parseIdBigInt(rawCategoriaId);
+
+    if (!categoriaId) {
+        console.warn("Categoria inválida ou não encontrada:", rawCategoriaId);
+        if (typeof window.limparGrid === 'function') {
             window.limparGrid();
         }
-        return; 
+        return;
     }
 
     // --- CAMPOS ---
@@ -617,11 +676,11 @@ export async function carregarDadosDaCategoria(categoriaIdParam = null) {
         `)
         .eq('categoria_id', categoriaId);
 
-    if (campos_erro) { 
-        console.error(campos_erro); 
-        return; 
+    if (campos_erro) {
+        console.error(campos_erro);
+        return;
     }
-    
+
     window.camposDaCategoria = campos || [];
 
     // --- LISTAS (DROPDOWNS) ---
@@ -633,12 +692,11 @@ export async function carregarDadosDaCategoria(categoriaIdParam = null) {
         `)
         .eq('categoria_id', categoriaId);
 
-    if (lista_erro) { 
-        console.error(lista_erro); 
-        return; 
+    if (lista_erro) {
+        console.error(lista_erro);
+        return;
     }
 
-    //retornar cedo se não houver listas disponiveis nessa categoria.
     if (!lista || lista.length === 0) {
         window.listasDaCategoria = [];
         if (typeof window.carregarCards === 'function') {
@@ -659,9 +717,9 @@ export async function carregarDadosDaCategoria(categoriaIdParam = null) {
         `)
         .in('dropdown_id', listaIds);
 
-    if (opcoes_erro) { 
-        console.error(opcoes_erro); 
-        return; 
+    if (opcoes_erro) {
+        console.error(opcoes_erro);
+        return;
     }
 
     window.listasDaCategoria = lista.map(itemLista => ({
@@ -676,8 +734,9 @@ export async function carregarDadosDaCategoria(categoriaIdParam = null) {
 window.carregarDadosDaCategoria = carregarDadosDaCategoria;
 
 export async function coletarDadosDoBanco(id, tabela) {
-    if (!id || !tabela) {
-        console.error("ID ou Tabela não fornecidos para coletarDadosDoBanco");
+    const idInt = parseIdBigInt(id);
+    if (!idInt || !tabela) {
+        console.error("ID ou Tabela inválidos para coletarDadosDoBanco:", id, tabela);
         return null;
     }
 
@@ -685,13 +744,13 @@ export async function coletarDadosDoBanco(id, tabela) {
         const { data, error } = await supabaseClient
             .from(tabela)
             .select('*')
-            .eq('id', id)
+            .eq('id', idInt)
             .single();
 
         if (error) throw error;
         return data;
     } catch (error) {
-        console.error(`Erro ao buscar dados na tabela ${tabela} (ID: ${id}):`, error);
+        console.error(`Erro ao buscar dados na tabela ${tabela} (ID: ${idInt}):`, error);
         return null;
     }
 }
@@ -708,13 +767,19 @@ export async function deletarCategoria(idCategoria) {
         return false;
     }
 
+    const idInt = parseIdBigInt(idCategoria);
+    if (!idInt) {
+        alert("ID da categoria inválido.");
+        return false;
+    }
+
     try {
-        console.log(`Iniciando exclusão da categoria ID ${idCategoria}`);
+        console.log(`Iniciando exclusão da categoria ID ${idInt}`);
 
         const { error } = await supabaseClient
             .from('categorias')
             .delete()
-            .eq('id', idCategoria);
+            .eq('id', idInt);
 
         if (error) throw error;
 
@@ -724,41 +789,47 @@ export async function deletarCategoria(idCategoria) {
         throw error;
     }
 }
+
 export async function deletarCampo(idItem, tabela, idDropdownPai = null) {
     if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 2) {
         alert("Ação não autorizada.");
         return false;
     }
 
-    try {
-        console.log(`Iniciando exclusão do ID ${idItem} na tabela ${tabela}`);
+    const idInt = parseIdBigInt(idItem);
+    const paiInt = parseIdBigInt(idDropdownPai);
 
-        // 1. Deleta o item da tabela alvo (seja campo_formulario ou lista_opcao)
+    if (!idInt || !tabela) {
+        alert("Parâmetros inválidos para exclusão.");
+        return false;
+    }
+
+    try {
+        console.log(`Iniciando exclusão do ID ${idInt} na tabela ${tabela}`);
+
         const { error: erroDelete } = await supabaseClient
             .from(tabela)
             .delete()
-            .eq('id', idItem);
+            .eq('id', idInt);
 
         if (erroDelete) throw erroDelete;
 
-        // 2. Lógica Especial: Se for uma opção de dropdown, checar se sobraram opções.
-        if (tabela === 'lista_opcao' && idDropdownPai) {
-            console.log(`Verificando se o dropdown pai (ID ${idDropdownPai}) ficou vazio...`);
-            
+        if (tabela === 'lista_opcao' && paiInt) {
+            console.log(`Verificando se o dropdown pai (ID ${paiInt}) ficou vazio...`);
+
             const { count, error: erroCount } = await supabaseClient
                 .from('lista_opcao')
                 .select('*', { count: 'exact', head: true })
-                .eq('dropdown_id', idDropdownPai);
+                .eq('dropdown_id', paiInt);
 
             if (erroCount) throw erroCount;
 
-            // Se não sobrou nenhuma opção, deleta o dropdown (lista_formulario) inteiro
             if (count === 0) {
-                console.log(`Dropdown ID ${idDropdownPai} está vazio. Excluindo lista_formulario...`);
+                console.log(`Dropdown ID ${paiInt} está vazio. Excluindo lista_formulario...`);
                 const { error: erroDeletePai } = await supabaseClient
                     .from('lista_formulario')
                     .delete()
-                    .eq('id', idDropdownPai);
+                    .eq('id', paiInt);
 
                 if (erroDeletePai) throw erroDeletePai;
             }
@@ -774,14 +845,12 @@ export async function deletarCampo(idItem, tabela, idDropdownPai = null) {
 // ==========================================
 //#endregion
 
-//#region UPDATES (usado para o modo 'edição' ou 'recentes' dos usuario permitidos)
+//#region UPDATES
 // ==========================================
 
 export async function atualizarCardsEmLote(tabela, arrayDeDados) {
     if (!arrayDeDados || arrayDeDados.length === 0) return true;
 
-    // Dicionário de colunas permitidas para cada tabela
-    // Removido o 'id' daqui, pois não queremos atualizá-lo, apenas usá-lo como filtro
     const colunasPermitidas = {
         'campos_formulario': ['grid_x', 'grid_y', 'grid_w', 'grid_h', 'data_contexto', 'data_peso'],
         'lista_formulario': ['grid_x', 'grid_y', 'grid_w', 'grid_h'],
@@ -791,11 +860,12 @@ export async function atualizarCardsEmLote(tabela, arrayDeDados) {
     try {
         const chavesValidas = colunasPermitidas[tabela];
 
-        // Cria um array de requisições UPDATE individuais em vez de um UPSERT em massa
         const promessasDeAtualizacao = arrayDeDados.map(item => {
+            const itemId = parseIdBigInt(item?.id);
+            if (!itemId) return Promise.resolve({ error: null });
+
             let objLimpo = {};
-            
-            // HIGIENIZAÇÃO: Filtra apenas as colunas que vieram no item E que são permitidas
+
             if (chavesValidas) {
                 Object.keys(item).forEach(key => {
                     if (chavesValidas.includes(key)) {
@@ -804,27 +874,23 @@ export async function atualizarCardsEmLote(tabela, arrayDeDados) {
                 });
             }
 
-            // Se não houver nenhum campo permitido para atualizar, evita fazer requisição vazia
             if (Object.keys(objLimpo).length === 0) return Promise.resolve({ error: null });
 
-            // Faz um UPDATE direcionado apenas ao ID correspondente
             return supabaseClient
                 .from(tabela)
                 .update(objLimpo)
-                .eq('id', item.id);
+                .eq('id', itemId);
         });
 
-        // Executa todos os updates simultaneamente (muito rápido)
         const resultados = await Promise.all(promessasDeAtualizacao);
 
-        // Verifica se alguma das requisições individuais retornou erro
         for (const resultado of resultados) {
             if (resultado.error) throw resultado.error;
         }
 
         console.log(`Dados atualizados com sucesso via UPDATE na tabela ${tabela}.`);
         return true;
-        
+
     } catch (error) {
         console.error(`Erro ao atualizar lote na tabela ${tabela}:`, error);
         alert(`Erro de sincronização de layouts/dados: ${error.message}`);
@@ -833,20 +899,26 @@ export async function atualizarCardsEmLote(tabela, arrayDeDados) {
 }
 
 export async function atualizarCategoriaDB(id, dados) {
+    const idInt = parseIdBigInt(id);
+    if (!idInt) {
+        alert("ID da categoria inválido.");
+        return false;
+    }
+
     try {
         const usuarioAtualId = await getUsuarioIdLogado();
-        
+
         const payloadCateg = {
-            nome: dados.nomeCateg, 
+            nome: dados.nomeCateg,
             texto_output: dados.textoResultado,
             editado_por: usuarioAtualId,
-            natureza_id: dados.natureza
+            natureza_id: parseIdBigInt(dados.natureza)
         };
 
         const { error } = await supabaseClient
             .from('categorias')
             .update(payloadCateg)
-            .eq('id', id);
+            .eq('id', idInt);
 
         if (error) throw error;
         return true;
@@ -857,23 +929,29 @@ export async function atualizarCategoriaDB(id, dados) {
 }
 
 export async function atualizarCampoNormalDB(id, dados) {
+    const idInt = parseIdBigInt(id);
+    if (!idInt) {
+        alert("ID do campo inválido.");
+        return false;
+    }
+
     try {
         const usuarioAtualId = await getUsuarioIdLogado();
 
         const payloadCampo = {
-            nome_campo: dados.nomeCampo, 
+            nome_campo: dados.nomeCampo,
             texto_output: dados.textoResultado,
             aditivo_texto: dados.aditivoTexto || null,
-            aditivo_posicao: dados.aditivoPosicao || null, 
+            aditivo_posicao: dados.aditivoPosicao || null,
             oculto_ate: dados.ocultoAte || null,
             editado_por: usuarioAtualId,
-            natureza_id: dados.natureza
+            natureza_id: parseIdBigInt(dados.natureza)
         };
 
         const { error } = await supabaseClient
             .from('campos_formulario')
             .update(payloadCampo)
-            .eq('id', id);
+            .eq('id', idInt);
 
         if (error) throw error;
         return true;
@@ -884,6 +962,12 @@ export async function atualizarCampoNormalDB(id, dados) {
 }
 
 export async function atualizarListaDB(id, dados) {
+    const idInt = parseIdBigInt(id);
+    if (!idInt) {
+        alert("ID da lista inválido.");
+        return false;
+    }
+
     try {
         const usuarioAtualId = await getUsuarioIdLogado();
 
@@ -896,7 +980,7 @@ export async function atualizarListaDB(id, dados) {
         const { error } = await supabaseClient
             .from('lista_formulario')
             .update(payloadLista)
-            .eq('id', id);
+            .eq('id', idInt);
 
         if (error) throw error;
         return true;
@@ -905,7 +989,14 @@ export async function atualizarListaDB(id, dados) {
         return false;
     }
 }
+
 export async function atualizarOpcaoListaDB(id, dados) {
+    const idInt = parseIdBigInt(id);
+    if (!idInt) {
+        alert("ID da opção inválido.");
+        return false;
+    }
+
     try {
         const usuarioAtualId = await getUsuarioIdLogado();
 
@@ -915,13 +1006,13 @@ export async function atualizarOpcaoListaDB(id, dados) {
             aditivo_texto: dados.aditivoTexto || null,
             aditivo_posicao: dados.aditivoPosicao || null,
             editado_por: usuarioAtualId,
-            natureza_id: dados.natureza
+            natureza_id: parseIdBigInt(dados.natureza)
         };
 
         const { error } = await supabaseClient
             .from('lista_opcao')
             .update(payloadOpcao)
-            .eq('id', id);
+            .eq('id', idInt);
 
         if (error) throw error;
         return true;
@@ -945,18 +1036,38 @@ window.updateSolicitacao = async function() {
 
         if (error) throw error;
 
-        // Salva os dados na variável global
-        window.solicitacoes = data; 
-        console.log("Lista global atualizada:", window.solicitacoes); // <- Isso vai te ajudar a testar!
+        window.solicitacoes = data;
+        console.log("Lista global atualizada:", window.solicitacoes);
 
-        // Manda desenhar na tela
-        window.renderizarSelectSolicitacao();
-
+        if (typeof window.renderizarSelectSolicitacao === 'function') {
+            window.renderizarSelectSolicitacao();
+        }
     } catch (error) {
         console.error("Erro ao carregar solicitações:", error);
     }
 };
 
+//#region SOLICITAÇÕES
+
+window.updateSolicitacao = async function() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('solicitacoes')
+            .select('*')
+            .order('texto', { ascending: true });
+
+        if (error) throw error;
+
+        window.solicitacoes = data;
+        console.log("Lista global atualizada:", window.solicitacoes);
+
+        if (typeof window.renderizarSelectSolicitacao === 'function') {
+            window.renderizarSelectSolicitacao();
+        }
+    } catch (error) {
+        console.error("Erro ao carregar solicitações:", error);
+    }
+};
 
 // FUNÇÃO PARA ADICIONAR NOVA SOLICITAÇÃO NO BANCO
 window.addSolicitacao = async function(texto) {
@@ -965,7 +1076,7 @@ window.addSolicitacao = async function(texto) {
         console.warn("Usuario não autorizado a criar solicitações.");
         return;
     }
-    
+
     try {
         // Formata para maiúsculo (padrão do seu sistema)
         const textoFormatado = texto.trim().toUpperCase();
@@ -974,14 +1085,13 @@ window.addSolicitacao = async function(texto) {
             .insert([{ texto: textoFormatado }]);
 
         if (error) throw error;
-            
+
         console.log("Solicitação adicionada com sucesso.");
         await window.updateSolicitacao(); // Atualiza a lista automaticamente
-
     } catch (error) {
         console.error("Erro ao adicionar solicitação:", error);
         // Mostra alerta caso o usuário não tenha permissão (Nível < 2 do RLS)
-        alert("Erro ao adicionar. Você tem permissão?"); 
+        alert("Erro ao adicionar. Você tem permissão?");
     }
 };
 
@@ -1003,12 +1113,13 @@ window.removeSolicitacao = async function(texto) {
 
         console.log("Solicitação removida com sucesso.");
         await window.updateSolicitacao(); // Atualiza a lista automaticamente
-            
-        window.atualizarDisplayGlobais(); 
+
+        if (typeof window.atualizarDisplayGlobais === 'function') {
+            window.atualizarDisplayGlobais();
+        }
         const select = document.getElementById('solicita');
         if (!select) return;
         select.value = "";
-
     } catch (error) {
         console.error("Erro ao remover solicitação:", error);
         alert("Erro ao remover. Você tem permissão?");
