@@ -1,0 +1,333 @@
+/* ======================================================== */
+/* COMPLEMENTO.CSS - Atualizado e Corrigido                 */
+/* ======================================================== */
+
+.body-section {
+    display: flex;
+    flex-direction: column; 
+    flex: 1;            
+    height: 100vh;           
+    max-height: 100vh;       
+    overflow: hidden;        
+}
+
+.painel-flutuante {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 95%;
+    max-width: 650px; 
+    
+    background-color: var(--bg-card);
+    border: 1px solid var(--cor-borda);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-borda-card);
+    
+    z-index: 999999; 
+    
+    display: flex;
+    flex-direction: column;
+    
+    max-height: 85vh;
+    overflow-y: visible;
+    
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -20px);
+    transition: transform var(--transition-padrao), opacity var(--transition-padrao);
+}
+.painel-flutuante.visivel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0); 
+}
+
+.painel-duas-colunas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-top: 4px;
+}
+
+.painel-duas-colunas.coluna-unica {
+    grid-template-columns: 1fr;
+}
+.painel-duas-colunas.coluna-unica .coluna-dir {
+    display: none;
+}
+.painel-flutuante.painel-compacto {
+    max-width: 420px;
+}
+.coluna-esq, .coluna-dir {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative; 
+}
+
+.drag-handle {
+    padding: 12px 16px;
+    background-color: var(--btn-primario);
+    color: #ffffff; 
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    cursor: grab;
+    border-top-left-radius: calc(var(--radius-borda-card) - 1px);
+    border-top-right-radius: calc(var(--radius-borda-card) - 1px);
+    user-select: none;
+}
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.painel-card {
+    border: none;
+    box-shadow: none;
+    padding: 16px 24px 24px 24px; 
+    overflow: visible !important;
+}
+
+@media (max-width: 768px) {
+    .painel-duas-colunas {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+/* Janelas curtas (pouca altura): reduz respiro para caber mais
+   conteúdo sem depender só da rolagem interna do painel */
+@media (max-height: 620px) {
+    .painel-flutuante { top: 10px; }
+    .painel-card { padding: 16px; }
+    .painel-duas-colunas { gap: 14px; }
+    .coluna-esq, .coluna-dir { gap: 10px; }
+}
+
+/* FLUTUANTES - ESQUERDA */
+.botoes-flutuantes,
+.botoes-flutuantes-editor {
+    position: fixed;
+    left: 50%;
+    top: 12px;
+    max-width: calc(100% - 24px);
+
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    background-color: var(--bg-card);
+    padding: 10px 16px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--radius-borda-card);
+    box-shadow: var(--shadow-lg);
+
+    z-index: 1000000;
+
+    transition: transform var(--transition-padrao), opacity var(--transition-padrao);
+    opacity: 0;
+    transform: translate(-50%, 16px);
+    pointer-events: none;
+}
+
+.botoes-flutuantes.visivel,
+.botoes-flutuantes-editor.visivel {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+}
+
+.form-group {
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--texto-secundario);
+}
+
+.select-multiplo {
+    height: auto;
+    min-height: 240px;
+    padding: 6px;
+    overflow-y: auto;
+    border-radius: 8px;
+    background-color: var(--bg-input);
+    border: 1.5px solid var(--input-borda);
+    scrollbar-width: thin; 
+}
+
+.select-multiplo option {
+    padding: 6px 10px;
+    margin-bottom: 2px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--texto-principal);
+    transition: background-color var(--transition-padrao), color var(--transition-padrao);
+}
+
+.select-multiplo option:hover {
+    background-color: var(--bg-input-hover); 
+}
+
+.select-multiplo option:checked {
+    background-color: var(--btn-primario);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.checkbox-operador-label span {
+    font-size: 12px;
+    color: var(--texto-principal);
+}
+.checkbox-operador-label:hover span {
+    color: var(--btn-primario);
+}
+
+.secao-vincular-natureza {
+    margin-top: 0;
+    border: 1.5px solid var(--cor-borda);
+    padding: 16px;
+    border-radius: 8px;
+    background-color: color-mix(in srgb, var(--bg-card), var(--bg-fundo) 30%);
+    overflow: visible !important; /* Impede que o fieldset corte o dropdown */
+}
+.secao-vincular-natureza:hover {
+    border-color: var(--input-borda);
+}
+.secao-vincular-natureza legend {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    background-color: var(--bg-card);
+    border: 1.5px solid var(--cor-borda);
+    border-radius: 6px;
+    color: var(--texto-secundario);
+}
+
+/* ======================================================== */
+/* DROPDOWN DE SUGESTÕES (AUTO-COMPLETE) DE NATUREZAS       */
+/* Posição (fixed/top/left/width) é controlada via JS em    */
+/* naturezas.js, ancorada às coordenadas reais do input —   */
+/* por isso NÃO fixamos position/top/left aqui: eles         */
+/* precisam poder ser sobrescritos pelo inline style do JS. */
+/* ======================================================== */
+.painel-sugestoes {
+    position: fixed;
+    max-height: 240px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+
+    z-index: 999999;
+
+    background-color: var(--bg-card);
+    border: 1.5px solid var(--cor-borda);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+}
+
+.sugestao-item-busca {
+    padding: 8px 12px;
+    font-size: 13px;
+    transition: background-color var(--transition-padrao);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--texto-principal);
+}
+.sugestao-item-busca:hover {
+    background-color: var(--btn-primario) !important;
+    color: #ffffff !important;
+}
+
+/* complemento de listas novas */
+
+.lista-opcoes-pendentes {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.opcao-pendente-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background-color: var(--bg-input, #f5f5f5);
+    border: 1px solid var(--cor-borda);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.opcao-pendente-nome {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    color: var(--texto-principal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.opcao-pendente-natureza {
+    flex-shrink: 0;
+    max-width: 130px;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: rgba(52, 152, 219, 0.15);
+    color: var(--btn-primario, #3498db);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-remover-opcao-pendente {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+}
+.btn-remover-opcao-pendente:hover {
+    color: #c0392b;
+}
+
+.opcao-pendente-vazia {
+    font-size: 12px;
+    color: var(--texto-secundario);
+    font-style: italic;
+    padding: 4px 0;
+}
+
+.btn-add-opcao {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border: 1px solid var(--btn-primario, #3498db);
+    color: var(--btn-primario, #3498db);
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+.btn-add-opcao:hover {
+    background-color: var(--btn-primario, #3498db);
+    color: #fff;
+}

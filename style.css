@@ -1,0 +1,508 @@
+@import url('./css/header.css');
+@import url('./css/formulario.css');
+@import url('./css/despacho.css');
+@import url('./css/complemento.css');
+@import url('./css/auth.css');
+@import url('./css/global.css');
+@import url('./css/recentes.css');
+@import url('./css/leaderboards.css');
+
+:root {
+    /* Cores Globais - Modo Claro*/
+    --bg-fundo: #f0f3f8;
+    --bg-card: #ffffff;
+    --cor-borda: #e2e8f0;
+    --texto-principal: #0f172a;
+    --texto-secundario: #64748b;
+    
+    --btn-primario: #3d5a80;
+    --btn-secundario: #f1f5f9;
+    --btn-delete: #b3483f;
+    --caixa-sugestao: #b9822e;
+
+    --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+    --shadow: 0 6px 16px -6px rgb(15 23 42 / 0.12), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+    --shadow-lg: 0 20px 35px -10px rgb(15 23 42 / 0.18), 0 6px 10px -4px rgb(15 23 42 / 0.06);
+
+    --radius-borda-card: 14px;
+    --radius-borda-btn: 10px;
+    --distancia-resizer: 8px;
+    
+    --card-dinamico-fontSize: clamp(10px, 1.2vw, 13px);
+    --card-dinamico-fontSize-Titulo: clamp(10px, 1.5vw, 14px);
+    
+    --transition-padrao: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-tema: 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+
+    color-scheme: light;
+
+    --bg-input: #f8fafc;
+    --bg-input-hover: #f1f5f9;
+    --input-borda: #cbd5e1;
+
+    --card-padding: 8px;
+    --checkbox-size: 12px;
+    --checkbox-border: 4px;
+
+    --margem-flutuante-esq: 320px;
+    --margem-flutuante-dir: 320px;
+
+    --reg-btn-color: #4b7d70;
+    --reg-btn-color-txt: #ffffff;
+    --reg-btn-color-borda: #3c6459;
+
+    --cancelReg-btn-color: #ffffff;
+    --cancelReg-btn-color-txt: #64748b;
+    --cancelReg-btn-color-borda: #cbd5e1;
+
+    --edit-btn-color: #ffffff;
+    --edit-btn-color-txt: #9c6b2e;
+    --edit-btn-color-borda: #d9b568;
+}
+
+[data-theme="dark"] {
+    /* Cores Globais - Modo Escuro */
+    --bg-fundo: #090e17;
+    --bg-card: #121a2f;  
+    --cor-borda: #1e293b;
+    --texto-principal: #f8fafc;
+    --texto-secundario: #94a3b8;
+    
+    --btn-primario: #7c9cc4;
+    --btn-secundario: #1e293b;
+    --btn-delete: #c98077; 
+    --shadow: 0 6px 16px -6px rgb(0 0 0 / 0.55), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 24px 40px -12px rgb(0 0 0 / 0.6), 0 8px 12px -4px rgb(0 0 0 / 0.4);
+    --caixa-sugestao: #d3a563;
+    color-scheme: dark;
+
+    --bg-input: #0f172a;
+    --bg-input-hover: #1e293b;
+    --input-borda: #334155;
+
+    --reg-btn-color: #5c9484;
+    --reg-btn-color-txt: #ffffff;
+    --reg-btn-color-borda: #47786a;
+
+    --cancelReg-btn-color: transparent;
+    --cancelReg-btn-color-txt: #94a3b8;
+    --cancelReg-btn-color-borda: #334155;
+
+    --edit-btn-color: transparent;
+    --edit-btn-color-txt: #d3a563;
+    --edit-btn-color-borda: #7a5d34;  
+}
+
+/* ==========================================================
+   TRANSIÇÃO DE TEMA — efeito de revelação circular ("chavão")
+   Usa a View Transitions API quando disponível (Chrome/Edge);
+   navegadores sem suporte caem no fade suave via `transition`
+   já aplicado em body/cards/inputs.
+   ========================================================== */
+@media (prefers-reduced-motion: no-preference) {
+    @supports (view-transition-name: root) {
+        ::view-transition-old(root) { animation: none; }
+        ::view-transition-new(root) {
+            animation: tema-revelacao var(--transition-tema) forwards;
+            clip-path: circle(0px at var(--theme-toggle-x, 100%) var(--theme-toggle-y, 0%));
+        }
+    }
+}
+@keyframes tema-revelacao {
+    to { clip-path: circle(150% at var(--theme-toggle-x, 100%) var(--theme-toggle-y, 0%)); }
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--cor-borda); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--texto-secundario); }
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    background-color: var(--bg-fundo);
+    color: var(--texto-principal);
+    transition: background-color var(--transition-padrao), color var(--transition-padrao);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/*  REDIRECTION LINKS  */
+
+/* Botão / link do header para COPOM Wiki */
+.header-wiki-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: var(--btn-secundario);
+    color: var(--texto-principal);
+    border: 1.5px solid var(--input-borda);
+    border-radius: var(--radius-borda-btn);
+    font-size: var(--card-dinamico-fontSize);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition:
+        background-color var(--transition-padrao),
+        border-color var(--transition-padrao),
+        color var(--transition-tema),
+        transform var(--transition-padrao),
+        box-shadow var(--transition-padrao);
+}
+
+.header-wiki-btn:hover {
+    background-color: var(--bg-input-hover);
+    border-color: var(--btn-primario);
+    color: var(--btn-primario);
+    box-shadow: var(--shadow);
+    transform: translateY(-1px);
+}
+
+.header-wiki-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-wiki-btn:focus-visible {
+    outline: 2px solid var(--btn-primario);
+    outline-offset: 2px;
+}
+
+.header-wiki-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+/* ==================== SEPARADORES ==================== */
+.resizer-barra {
+    position: relative;
+    width: 16px; 
+    cursor: col-resize;
+    flex-shrink: 0;
+    z-index: 10;
+}
+.resizer-barra::after {
+    content: '';
+    position: absolute;
+    right: 50%;
+    transform: translateX(50%);
+    width: 2px;
+    top: 10px;
+    bottom: 10px;
+    background: var(--cor-borda);
+    border-radius: 4px;
+    transition: all var(--transition-padrao);
+}
+.resizer-barra:hover::after,
+.resizer-barra:active::after {
+    width: 6px;
+    background: var(--btn-primario);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--btn-primario), transparent 50%);
+}
+
+/* ==================== BOTÕES GERAIS ==================== */
+button {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-borda-btn);
+    cursor: pointer;
+    border: none;
+    transition: background-color var(--transition-padrao), transform 0.1s, box-shadow var(--transition-padrao);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+button:active { transform: scale(0.96); }
+
+.botoes-acoes { display: flex; gap: 10px; }
+
+/* BOTÕES GERAIS */
+.geral-btn-prim {
+    background-color: var(--btn-primario);
+    color: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+.geral-btn-prim:hover {
+    background-color: color-mix(in srgb, var(--btn-primario), black 15%);
+    box-shadow: var(--shadow);
+}
+
+.geral-btn-sec {
+    background-color: var(--btn-secundario);
+    color: var(--texto-principal);
+    border: none;
+    border-radius: var(--radius-borda-btn);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.geral-btn-sec:hover {
+    background-color: color-mix(in srgb, var(--btn-secundario), black 10%);
+}
+
+/* Ajustes específicos para botões com ícone (quadradinhos) */
+.geral-btn-sec.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+}
+.geral-btn-sec.icon-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+/* Estado ATIVO (Grid ou Outlines ligados) */
+.geral-btn-sec.ativo {
+    background-color: var(--btn-primario);
+}
+.geral-btn-sec.ativo:hover {
+    background-color: color-mix(in srgb, var(--btn-primario), black 12%);
+}
+
+/* BOTÕES REGISTROS */
+
+.geral-btn-registrar {
+    background-color: var(--reg-btn-color);
+    color: var(--reg-btn-color-txt);
+    border: 1.5px solid var(--reg-btn-color-borda);
+    box-shadow: var(--shadow-sm);
+}
+.geral-btn-registrar:hover {
+    background-color: color-mix(in srgb, var(--reg-btn-color), black 15%);
+    box-shadow: var(--shadow);
+}
+
+.geral-btn-registrar-cancel {
+    background-color: var(--cancelReg-btn-color);
+    color: var(--cancelReg-btn-color-txt);
+    border: 1.5px solid var(--cancelReg-btn-color-borda);
+    box-shadow: var(--shadow-sm);
+}
+.geral-btn-registrar-cancel:hover {
+    background-color: color-mix(in srgb, var(--cancelReg-btn-color), black 15%);
+    box-shadow: var(--shadow);
+}
+
+/* BOTÕES EDICAO */
+.geral-btn-edit {
+    background-color: var(--edit-btn-color);
+    color: var(--edit-btn-color-txt);
+    border: 1.5px solid var(--edit-btn-color-borda);
+    box-shadow: var(--shadow-sm);
+}
+.geral-btn-edit:hover {
+    background-color: color-mix(in srgb, var(--edit-btn-color), black 15%);
+    box-shadow: var(--shadow);
+}
+
+.geral-btn-edit-save {
+    background-color: var(--reg-btn-color);
+    color: var(--reg-btn-color-txt);
+    border: 1.5px solid var(--reg-btn-color-borda);
+    box-shadow: var(--shadow-sm);
+}
+.geral-btn-edit-save:hover {
+    background-color: color-mix(in srgb, var(--reg-btn-color), black 15%);
+    box-shadow: var(--shadow);
+}
+
+.geral-btn-edit-cancel {
+    background-color: var(--cancelReg-btn-color);
+    color: var(--cancelReg-btn-color-txt);
+    border: 1.5px solid var(--cancelReg-btn-color-borda);
+    box-shadow: var(--shadow-sm);
+}
+.geral-btn-edit-cancel:hover {
+    background-color: color-mix(in srgb, var(--cancelReg-btn-color), black 15%);
+    box-shadow: var(--shadow);
+}
+
+/* ==================== INPUTS ==================== */
+.input-area {
+    width: 100%;
+    padding: 10px 8px;
+    background-color: var(--bg-input); /* <-- Agora possui fundo próprio contrastante */
+    color: var(--texto-principal);
+    border: 1.5px solid var(--input-borda); /* <-- Borda mais definida */
+    border-radius: var(--radius-borda-btn);
+    font-size: var(--card-dinamico-fontSize);
+    outline: none;
+    transition: all var(--transition-padrao);
+}
+.input-area:hover {
+    background-color: var(--bg-input-hover);
+    border-color: color-mix(in srgb, var(--input-borda), var(--texto-secundario) 40%);
+}
+.input-area:focus {
+    background-color: color-mix(in srgb, var(--bg-input), var(--input-borda) 30%);
+    border-color: var(--btn-primario);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--btn-primario), transparent 75%);
+}
+::placeholder {
+    color: var(--texto-secundario);
+    opacity: 0.7;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    background-color: var(--bg-input);
+    border: 1px solid var(--input-borda);
+    border-radius: var(--checkbox-border); 
+    
+    cursor: pointer;
+    transition: all var(--transition-padrao);
+    
+    display: inline-block;
+    vertical-align: middle;
+}
+
+input[type="checkbox"]:hover {
+    background-color: var(--bg-input-hover);
+    border-color: var(--btn-primario);
+    box-shadow: var(--shadow-sm);
+}
+input[type="checkbox"]:checked {
+    background-color: var(--btn-primario);
+    border-color: var(--btn-primario);
+    
+    /* Desenha o ícone do "V" (check) em branco usando um SVG embutido */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath fill-rule='evenodd' d='M12.207 5.293a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L6.5 9.793l4.293-4.293a1 1 0 011.414 0z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-size: 85%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--caixa-sugestao);
+    outline-offset: 2px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ==================== TOAST ==================== */
+.toast-copia {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: var(--texto-principal);
+    color: var(--bg-fundo);
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 1000;
+}
+.toast-copia.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* =========================================
+   ESTILOS GERAIS DAS LOGOS (Header e Rodapé)
+========================================= */
+
+/* 1. O fundo --bg-card agora fica aqui, isolado e imune ao filtro */
+.logo-fundo {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-borda-btn);
+    display: inline-flex;  /* Garante que o fundo abrace o tamanho exato da imagem */
+    align-items: center;
+    justify-content: center;
+}
+
+/* 2. A imagem agora é transparente e apenas recebe a inversão de cor */
+.logo-cliente-header,
+.user-panel-footer img {
+    background-color: transparent !important; /* IMPORTANTE: Fundo transparente! */
+    border: none !important;
+    box-shadow: none !important;
+    
+    pointer-events: none;
+    user-select: none;
+    
+    /* O filtro agora inverte APENAS a cor da logo (o branco da imagem vira escuro) */
+    filter: invert(0.8); 
+}
+
+/* Adaptação para o Modo Escuro */
+[data-theme="dark"] .logo-cliente-header,
+[data-theme="dark"] .user-panel-footer img {
+    filter: none; /* No modo escuro, a imagem volta a ser branca */
+}
+
+/* =========================================
+   LAYOUT RESPONSIVO "À PROVA DE BALAS"
+   Abaixo de 1250px as duas colunas (Formulário
+   e Despacho) empilham verticalmente e a
+   página passa a rolar normalmente, evitando
+   que cards e campos sejam cortados em
+   janelas estreitas ou baixas.
+========================================= */
+@media (max-width: 1250px) {
+    .body-section {
+        height: auto;
+        max-height: none;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow: visible;
+    }
+
+    .main-colunas-wrapper {
+        flex-direction: column;
+        overflow: visible;
+    }
+
+    .body-formulario,
+    .body-despacho {
+        width: 100% !important;
+        min-width: 0;
+        flex: none;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .resizer-barra { display: none; }
+}
+
+@media (max-width: 520px) {
+    :root {
+        --card-padding: 6px;
+        --distancia-resizer: 6px;
+    }
+}

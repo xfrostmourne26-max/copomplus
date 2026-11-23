@@ -1,0 +1,203 @@
+.body-despacho {
+    /* flex-grow:0 é essencial aqui: o despacho deve manter exatamente a
+       largura definida (por padrão via `width`, ou via px quando o
+       usuário arrasta o resizer). Se ele "crescesse" como o formulário
+       (flex-grow:1), a proporção padrão ficava ~50/50 e o arraste do
+       resizer não acompanhava o mouse corretamente. Quem absorve o
+       espaço restante é sempre o .body-formulario (flex-grow:1). */
+    flex: 0 1 auto;
+    width: clamp(300px, 35%, 520px);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: var(--distancia-resizer);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+@media (max-width: 1250px) {
+    .body-despacho { min-width: 0; }
+}
+
+/*card*/
+.card-fixo-resultado {
+    background-color: var(--bg-card);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--radius-borda-card);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-height: 100%;
+    align-items: center;
+}
+.card-fixo-resultado h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--texto-principal);
+}
+
+.textarea-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0px var(--card-padding);
+}
+
+#resultado {
+    width: 100%;
+    min-height: 150px; 
+    flex-grow: 1;
+    padding: 8px;
+    background-color: var(--bg-fundo);
+    color: var(--texto-principal);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--radius-borda-btn);
+    font-size: var(--card-dinamico-fontSize);
+    line-height: 1.6;
+    resize: none;
+    box-sizing: border-box;
+    transition: all var(--transition-padrao);
+    overflow-y: auto; 
+}
+#resultado:focus {
+    border-color: var(--btn-primario);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--btn-primario), transparent 80%);
+    outline: none;
+}
+#resultado::selection {
+    background: var(--btn-primario);
+    color: #ffffff;
+}
+
+/*sugestoes naturezas*/
+.sugestao-box {
+    background-color: color-mix(in srgb, var(--caixa-sugestao) 10%, transparent);
+    border: 2px solid color-mix(in srgb, var(--caixa-sugestao) 50%, transparent);
+    border-left: 4px solid var(--caixa-sugestao);
+    border-right: 4px solid var(--caixa-sugestao);
+    border-radius: var(--radius-borda-btn);
+    padding: 16px;
+    width: 100%;
+}
+.sugestao-box h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--texto-principal);
+}
+.sugestao-box ul {
+    list-style: none;
+    font-size: 13px;
+    color: var(--texto-secundario);
+}
+
+/* SortableJS */
+.text-editor {
+    min-height: 200px;
+    padding: 10px;
+    border-radius: var(--radius-borda-btn);
+}
+.text-line {
+    min-height: 35px; 
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+/* Pedaços de Texto (itens arrastáveis) */
+.text-piece {
+    position: relative;
+    
+    /* ADICIONADO: Força a ficar lado a lado e ajustado ao texto */
+    display: inline-flex; 
+    align-items: center;
+    width: max-content; 
+    
+    padding: 6px 10px;
+    margin: 4px;
+    cursor: grab;
+    line-height: 1.5;
+    border-radius: var(--radius-borda-btn);
+    transition: all var(--transition-padrao);
+    box-shadow: var(--shadow-sm);
+}
+.text-piece:active { cursor: grabbing; transform: scale(0.98); }
+
+.text-piece .idx-badge {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 8px;
+    padding: 2px 6px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    display: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    white-space: nowrap; /* Impede que o texto quebre de linha */
+}
+
+/* Visualização limpa (Sem outlines) */
+#resultado:not(.show-outlines) .text-line {
+    display: block; 
+    min-height: auto;
+    margin: 0;
+}
+#resultado:not(.show-outlines) .text-piece {
+    display: inline-block; 
+    vertical-align: top;   
+    padding: 0;
+    margin: 0;             
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    cursor: text;
+    color: var(--texto-principal) !important;
+}
+#resultado:not(.show-outlines) .idx-badge { display: none !important; }
+
+/* Cores Dinâmicas (Contextos) - Mais suaves e modernas */
+.show-outlines .text-line[data-contexto="0"] .text-piece { border: 1px solid #60a5fa; background: #eff6ff; }
+.show-outlines .text-line[data-contexto="0"] .text-piece .idx-badge { background: #3b82f6; }
+
+.show-outlines .text-line[data-contexto="1"] .text-piece { border: 1px solid #4ade80; background: #f0fdf4; }
+.show-outlines .text-line[data-contexto="1"] .text-piece .idx-badge { background: #22c55e; }
+
+.show-outlines .text-line[data-contexto="2"] .text-piece { border: 1px solid #fbbf24; background: #fffbeb; }
+.show-outlines .text-line[data-contexto="2"] .text-piece .idx-badge { background: #f59e0b; }
+
+/* Contextos no Tema Escuro */
+[data-theme="dark"] .show-outlines .text-line[data-contexto="0"] .text-piece { border-color: #1d4ed8; background: #1e3a8a; color: #fff; }
+[data-theme="dark"] .show-outlines .text-line[data-contexto="0"] .text-piece .idx-badge { background: #2563eb; }
+
+[data-theme="dark"] .show-outlines .text-line[data-contexto="1"] .text-piece { border-color: #15803d; background: #14532d; color: #fff; }
+[data-theme="dark"] .show-outlines .text-line[data-contexto="1"] .text-piece .idx-badge { background: #16a34a; }
+
+[data-theme="dark"] .show-outlines .text-line[data-contexto="2"] .text-piece { border-color: #b45309; background: #78350f; color: #fff; }
+[data-theme="dark"] .show-outlines .text-line[data-contexto="2"] .text-piece .idx-badge { background: #d97706; }
+
+.show-outlines .text-piece .idx-badge { display: flex; }
+.suffix { white-space: pre; }
+
+/*optional*/
+#resultado.modo-edicao-ativo {
+    border: 2px dashed #ff9800;
+    background-color: rgba(255, 152, 0, 0.05);
+}
+
+#resultado.modo-edicao-ativo .text-piece {
+    cursor: grab;
+    border: 1px solid #ccc; /* Destaca os bloquinhos */
+}
+
+#resultado.modo-edicao-ativo .text-piece:active {
+    cursor: grabbing; /* Quando clica e segura */
+}

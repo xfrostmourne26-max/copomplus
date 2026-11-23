@@ -1,0 +1,33 @@
+.campo-global{
+    margin-bottom: 8px;
+}
+.card-global{
+    background-color: var(--bg-card);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--radius-borda-card);
+    box-shadow: var(--shadow-sm);
+    padding: var(--card-padding);
+    box-sizing: border-box;
+}
+
+.campo-localizacao {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+    margin-bottom: 8px;
+}
+.card-referencia{
+    flex: 9;
+}
+
+.card-solicita {
+    width: 100%;
+}
+
+/* Estilo do Cabeçalho (Nome, Contato, Referência) */
+.bloco-cabecalho-resultado {
+    font-size: var(--card-dinamico-fontSize);
+}
+.bloco-rodape-resultado {
+    font-size: var(--card-dinamico-fontSize);
+}

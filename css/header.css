@@ -1,0 +1,157 @@
+.header-section {
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--cor-borda);
+    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    z-index: 100;
+    transition: background-color var(--transition-padrao), border-color var(--transition-padrao);
+}
+
+.header-logo h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: var(--texto-principal);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.header-logo .subtitulo {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--texto-secundario);
+    margin-top: 2px;
+}
+
+/* Logo no Header */
+.logo-cliente-header {
+    height: 48px; 
+    width: auto;
+    object-fit: contain;
+}
+/* Container da Logo no rodapé do Painel do Usuário */
+.user-panel-footer {
+    margin-top: auto;
+    padding: 20px 0;
+    text-align: center;
+    border-top: 1px solid var(--cor-borda); 
+}
+
+.user-panel-footer img {
+    height: 45px; 
+}
+
+
+.header-section-btn {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+@media (max-width: 560px) {
+    .header-logo .subtitulo { display: none; }
+    .header-logo h1 { font-size: 18px; }
+    .logo-cliente-header { height: 36px; }
+}
+
+/* ==================== ALTERNADOR DE TEMA ==================== */
+.theme-toggle {
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.theme-toggle-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 60px;
+    height: 32px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background-color: var(--btn-secundario);
+    border: 1.5px solid var(--cor-borda);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: background-color var(--transition-padrao), border-color var(--transition-padrao);
+}
+
+.theme-toggle-icon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 15px;
+    height: 15px;
+    transition: color var(--transition-padrao), opacity var(--transition-padrao), transform var(--transition-padrao);
+}
+.theme-toggle-icon svg { width: 100%; height: 100%; }
+
+.theme-toggle-icon--sun { color: #d97706; }
+.theme-toggle-icon--moon { color: #94a3b8; opacity: 0.55; transform: scale(0.85); }
+
+.theme-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--btn-primario);
+    box-shadow: var(--shadow);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color var(--transition-padrao), width 0.15s ease;
+}
+
+.theme-toggle:hover .theme-toggle-track { border-color: var(--btn-primario); }
+.theme-toggle:active .theme-toggle-thumb { width: 27px; }
+
+.theme-toggle:focus-visible .theme-toggle-track {
+    outline: none;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 3px color-mix(in srgb, var(--btn-primario), transparent 65%);
+}
+
+/* Estado ESCURO: a "bolinha" desliza para a direita e os ícones invertem destaque */
+[data-theme="dark"] .theme-toggle-thumb {
+    transform: translateX(28px);
+}
+[data-theme="dark"] .theme-toggle-icon--sun { opacity: 0.5; transform: scale(0.85); }
+[data-theme="dark"] .theme-toggle-icon--moon { color: #e2e8f0; opacity: 1; transform: scale(1); }
+
+/* ==================== AUTENTICAÇÃO ==================== */
+.header-auth-btn {
+    overflow: hidden; 
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 2px solid var(--cor-borda);
+    border-radius: 50%;
+    background: var(--bg-fundo);
+    color: var(--texto-principal);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition-padrao);
+}
+.header-auth-btn svg { color: var(--texto-principal); }
+.header-auth-btn:hover {
+    border-color: var(--btn-primario);
+    box-shadow: var(--shadow);
+    transform: translateY(-1px);
+}
+.header-auth-btn:active { transform: scale(.94); }
+.header-auth-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--btn-primario), transparent 70%);
+}
