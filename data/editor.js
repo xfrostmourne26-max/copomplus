@@ -498,7 +498,7 @@ window.fecharPainelEdicao = function (){
 }
 window.salvarNovosDados = async function (){
 
-    if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 1) {
+    if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 2) {
         window.mostrarToast("Ação não autorizada."); 
         return;
     }

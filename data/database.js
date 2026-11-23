@@ -248,7 +248,7 @@ export async function salvarNovaCategoria() {
 }
 
 export async function salvarNovoComplemento() {
-    if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 1) {
+    if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 2) {
         window.mostrarToast("Ação não autorizada."); 
         return false;
     }

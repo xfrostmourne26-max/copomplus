@@ -148,7 +148,7 @@ window.toggleComplemento = function () {
 }
 
 window.exibirNovoComplemento = function () {
-    if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 1) {
+    if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 2) {
         console.warn("Usuário não autorizado a criar opções.");
         return;
     }
