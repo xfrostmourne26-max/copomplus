@@ -205,7 +205,7 @@ window.onCategChange = async function(e, database) {
         const idNum = Number(valorSelecionado);
 
         window.categoriaSelecionada = window.listaDeCategorias.find(cat => cat.id === idNum) || null;
-        const allowComplement = btn && (window.nivelPermissaoUsuario >= 1);
+        const allowComplement = btn && (window.nivelPermissaoUsuario >= 2);
 
         window.alterarVisibilidadeElemento?.("btnComplemento", allowComplement);
 
@@ -241,7 +241,7 @@ let nomeNovaCategoria = null;
 window.textoNovaCategoria = null;
 
 window.exibirNovaCategoria = function() {
-    if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 1) {
+    if (!window.nivelPermissaoUsuario || window.nivelPermissaoUsuario < 2) {
         console.warn("Usuario não autorizado a criar categorias.");
         return;
     }
@@ -280,10 +280,10 @@ window.fecharNovaCategoria = function() {
 
     ["btnRegistrar", "btnCancelar", "btnOutlines", "categoriaNome", "novaCategCampos", "naturezasCampo", "btnComplemento", "regraOculto", "regraOcultoOperadorContainer"].forEach(id => window.alterarVisibilidadeElemento(id, false));
 
-    if (window.nivelPermissaoUsuario && window.nivelPermissaoUsuario >= 1) {
+    if (window.nivelPermissaoUsuario && window.nivelPermissaoUsuario >= 2) {
         window.alterarVisibilidadeElemento("btnNovaCategoria", true);
     }
-    if (window.nivelPermissaoUsuario && window.nivelPermissaoUsuario >= 2) {
+    if (window.nivelPermissaoUsuario && window.nivelPermissaoUsuario >= 3) {
         window.alterarVisibilidadeElemento("btnModoEdicao", true);
     }
 

@@ -186,10 +186,10 @@ window.fecharNovoComplemento = function () {
     document.getElementById("camposDinamicos")?.classList.remove("modo-edicao");
     window.alterarVisibilidadeElemento("camposDinamicos", window.temCategoria());
 
-    if (window.nivelPermissaoUsuario && window.nivelPermissaoUsuario >= 1) {
+    if (window.nivelPermissaoUsuario && window.nivelPermissaoUsuario >= 2) {
         window.alterarVisibilidadeElemento("btnNovaCategoria", true);
     }
-    if (window.nivelPermissaoUsuario && window.nivelPermissaoUsuario >= 2) {
+    if (window.nivelPermissaoUsuario && window.nivelPermissaoUsuario >= 3) {
         window.alterarVisibilidadeElemento("btnModoEdicao", true);
     }
 

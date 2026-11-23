@@ -174,7 +174,7 @@ const alternarBotoesEdicao = (isEditando) => {
 
     window.PainelEdicao(isEditando);
 
-    const temPermissao = !window.nivelPermissaoUsuario || window.nivelPermissaoUsuario >= 1;
+    const temPermissao = !window.nivelPermissaoUsuario || window.nivelPermissaoUsuario >= 3;
     const mostrarBotoesAdicionais = !isEditando && temPermissao;
     
     ["btnComplemento", "btnNovaCategoria"].forEach(id => window.alterarVisibilidadeElemento(id, mostrarBotoesAdicionais));
