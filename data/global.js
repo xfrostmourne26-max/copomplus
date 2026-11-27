@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Elementos de Controle (Mostrar/Esconder)
+    // 1. Elementos de Controle (Mostrar / Esconder)
     const btnToggleDados = document.getElementById('btnToggleDados');
     const containerDados = document.getElementById('containerDados');
 
@@ -10,19 +10,19 @@ document.addEventListener('DOMContentLoaded', () => {
         inputs[id] = document.getElementById(id);
     });
 
-    // 3. Elementos do Despacho e Ações
+    // 3. Select de Solicitação e Área de Resultado
+    const selectSolicita = document.getElementById('solicita');
     const resultadoDiv = document.getElementById('resultado');
-    const btnCopiar = document.getElementById('copiarOutput');
-    const btnLimpar = document.getElementById('limparOutput');
 
-    function limparCamposDados() {
+    // --- FUNÇÃO: LIMPAR CAMPOS GLOBAIS ---
+    function limparCamposGlobais() {
         camposIds.forEach(id => {
             if (inputs[id]) inputs[id].value = '';
         });
         atualizarCabecalhoDespacho();
     }
 
-    // --- FUNÇÃO: MOSTRAR / ESCONDER COLUNA 1 ---
+    // --- FUNÇÃO: MOSTRAR / ESCONDER CAMPOS (INICIA OCULTO) ---
     if (btnToggleDados && containerDados) {
         containerDados.classList.add('oculto');
         btnToggleDados.textContent = '▶ Mostrar Identificação e Localização';
@@ -34,13 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 : '▼ Ocultar Identificação e Localização';
 
             if (estaOculto) {
-                limparCamposDados();
+                limparCamposGlobais();
             }
         });
     }
 
-    // --- FUNÇÃO: ATUALIZAR CABEÇALHO NO RESULTADO DO DESPACHO ---
+    // --- FUNÇÃO: ATUALIZAR CABEÇALHO / GLOBAIS NO RESULTADO DO DESPACHO ---
     function atualizarCabecalhoDespacho() {
+        if (!resultadoDiv) return;
+
         const nome = inputs.nome?.value.trim() || '';
         const contato = inputs.contato?.value.trim() || '';
         const cidade = inputs.cidade?.value.trim() || '';
@@ -48,22 +50,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const endereco = inputs.endereco?.value.trim() || '';
         const numero = inputs.numero?.value.trim() || '';
         const complemento = inputs.complemento?.value.trim() || '';
+        const solicitacao = selectSolicita?.value?.trim() || '';
 
-        // Procura se já existe o bloco de cabeçalho dentro de #resultado
         let blocoCabecalho = resultadoDiv.querySelector('.bloco-cabecalho-resultado');
-
-        // Monta as linhas apenas com o que foi preenchido
-        let linhas = [];
+        const linhas = [];
 
         if (nome || contato) {
-            let linhaId = [];
+            const linhaId = [];
             if (nome) linhaId.push(`<strong>NOME:</strong> ${nome.toUpperCase()}`);
             if (contato) linhaId.push(`<strong>CONTATO:</strong> ${contato}`);
             linhas.push(linhaId.join(' | '));
         }
 
-        // Monta o endereço completo de forma inteligente
-        let partesEndereco = [];
+        const partesEndereco = [];
         if (endereco) partesEndereco.push(endereco.toUpperCase());
         if (numero) partesEndereco.push(`Nº ${numero.toUpperCase()}`);
         if (complemento) partesEndereco.push(`(${complemento.toUpperCase()})`);
@@ -74,13 +73,15 @@ document.addEventListener('DOMContentLoaded', () => {
             linhas.push(`<strong>LOCALIZAÇÃO:</strong> ${partesEndereco.join(' ')}`);
         }
 
-        // Se todos os campos estiverem vazios, remove o bloco do resultado
+        if (solicitacao) {
+            linhas.push(`${solicitacao}`);
+        }
+
         if (linhas.length === 0) {
             if (blocoCabecalho) blocoCabecalho.remove();
             return;
         }
 
-        // Se não existir ainda, cria no topo da #resultado sem apagar o resto do despacho
         if (!blocoCabecalho) {
             blocoCabecalho = document.createElement('div');
             blocoCabecalho.className = 'bloco-cabecalho-resultado';
@@ -90,45 +91,26 @@ document.addEventListener('DOMContentLoaded', () => {
         blocoCabecalho.innerHTML = linhas.join('<br>');
     }
 
-    // Escuta a digitação em tempo real em todos os inputs
+    // --- ESCUTA DIGITAÇÃO NOS INPUTS ---
     camposIds.forEach(id => {
         if (inputs[id]) {
             inputs[id].addEventListener('input', atualizarCabecalhoDespacho);
         }
     });
 
-    // --- FUNÇÃO: COPIAR OUTPUT COMPLETO (CABEÇALHO + DESPACHO) ---
-    if (btnCopiar) {
-        btnCopiar.addEventListener('click', () => {
-            const textoParaCopiar = resultadoDiv.innerText.trim();
-
-            if (!textoParaCopiar) {
-                alert('O resultado do despacho está vazio!');
-                return;
-            }
-
-            navigator.clipboard.writeText(textoParaCopiar).then(() => {
-                const textoOriginal = btnCopiar.textContent;
-                btnCopiar.textContent = 'Copiado! ✓';
-                setTimeout(() => {
-                    btnCopiar.textContent = textoOriginal;
-                }, 2000);
-            }).catch(err => {
-                console.error('Erro ao copiar texto: ', err);
-            });
+    // --- ESCUTA SELEÇÃO EM #solicita ---
+    if (selectSolicita) {
+        selectSolicita.addEventListener('change', () => {
+            atualizarCabecalhoDespacho();
+            window.gerarDespacho?.();
         });
     }
 
-    // --- FUNÇÃO: LIMPAR TUDO ---
-    if (btnLimpar) {
-        btnLimpar.addEventListener('click', () => {
-            camposIds.forEach(id => {
-                if (inputs[id]) inputs[id].value = '';
-            });
-            const selectSolicita = document.getElementById('solicita');
-            if (selectSolicita) selectSolicita.value = '';
+    // Sincroniza quando o despacho atualiza os campos globais
+    window.atualizarDisplayGlobais = function () {
+        atualizarCabecalhoDespacho();
+    };
 
-            resultadoDiv.innerHTML = '';
-        });
-    }
+    window.atualizarCabecalhoDespacho = atualizarCabecalhoDespacho;
+    window.limparCamposGlobais = limparCamposGlobais;
 });

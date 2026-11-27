@@ -1027,47 +1027,49 @@ export async function atualizarOpcaoListaDB(id, dados) {
 
 //#region SOLICITAÇÕES
 
-window.updateSolicitacao = async function() {
+window.updateSolicitacao = async function () {
+    const select = document.getElementById('solicita');
+    if (!select) return;
+
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+        console.warn('supabaseClient não inicializado ao carregar solicitações.');
+        return;
+    }
+
+    const valorAtual = select.value;
+
     try {
         const { data, error } = await supabaseClient
             .from('solicitacoes')
-            .select('*')
+            .select('id, texto')
             .order('texto', { ascending: true });
 
         if (error) throw error;
 
-        window.solicitacoes = data;
-        console.log("Lista global atualizada:", window.solicitacoes);
+        // Mantém a primeira opção ("-- Solicitação --") e limpa as demais
+        select.innerHTML = '<option value="">-- Solicitação --</option>';
 
-        if (typeof window.renderizarSelectSolicitacao === 'function') {
-            window.renderizarSelectSolicitacao();
+        (data || []).forEach((item) => {
+            if (!item?.texto) return;
+            const option = document.createElement('option');
+            option.value = item.texto;
+            option.textContent = item.texto;
+            option.dataset.id = item.id;
+            select.appendChild(option);
+        });
+
+        // Restaura seleção anterior se ainda existir
+        if (valorAtual && Array.from(select.options).some(opt => opt.value === valorAtual)) {
+            select.value = valorAtual;
         }
-    } catch (error) {
-        console.error("Erro ao carregar solicitações:", error);
+    } catch (err) {
+        console.error('Erro ao carregar solicitações:', err);
     }
 };
 
-//#region SOLICITAÇÕES
-
-window.updateSolicitacao = async function() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('solicitacoes')
-            .select('*')
-            .order('texto', { ascending: true });
-
-        if (error) throw error;
-
-        window.solicitacoes = data;
-        console.log("Lista global atualizada:", window.solicitacoes);
-
-        if (typeof window.renderizarSelectSolicitacao === 'function') {
-            window.renderizarSelectSolicitacao();
-        }
-    } catch (error) {
-        console.error("Erro ao carregar solicitações:", error);
-    }
-};
+document.addEventListener('DOMContentLoaded', () => {
+    window.updateSolicitacao();
+});
 
 // FUNÇÃO PARA ADICIONAR NOVA SOLICITAÇÃO NO BANCO
 window.addSolicitacao = async function(texto) {
