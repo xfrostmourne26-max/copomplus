@@ -262,9 +262,55 @@
             <div id="resizerDespacho" class="resizer-barra"></div>
 
             <!-- COLUNA 2: DESPACHO -->
-             <section id="bodyDespacho" class="body-despacho">
-                <div class="campo-global">
+            <section id="bodyDespacho" class="body-despacho">
 
+                <!-- 1. BOTÃO PARA MOSTRAR / ESCONDER (COMEÇA MOSTRANDO A OPÇÃO DE EXIBIR) -->
+                <div class="campo-global">
+                    <button type="button" id="btnToggleDados" class="geral-btn-prim" style="width: 100%;">
+                        ▶ Mostrar Identificação e Localização
+                    </button>
+                </div>
+
+                <!-- 2. CAMPOS DE IDENTIFICAÇÃO E LOCALIZAÇÃO (INICIA COM CLASSE "oculto") -->
+                <div id="containerDados" class="coluna-dados oculto">
+
+                    <!-- Linha 1: Nome e Contato -->
+                    <div class="campo-localizacao">
+                        <div class="card-global card-solicita">
+                            <input type="text" id="nome" class="input-area" placeholder="Nome" />
+                        </div>
+                        <div class="card-global card-solicita">
+                            <input type="text" id="contato" class="input-area" placeholder="Contato" />
+                        </div>
+                    </div>
+
+                    <!-- Linha 2: Cidade e Bairro -->
+                    <div class="campo-localizacao">
+                        <div class="card-global card-solicita">
+                            <input type="text" id="cidade" class="input-area" placeholder="Cidade" />
+                        </div>
+                        <div class="card-global card-solicita">
+                            <input type="text" id="bairro" class="input-area" placeholder="Bairro" />
+                        </div>
+                    </div>
+
+                    <!-- Linha 3: Endereço, Número e Complemento -->
+                    <div class="campo-localizacao">
+                        <div class="card-global card-referencia">
+                            <input type="text" id="endereco" class="input-area" placeholder="Endereço" />
+                        </div>
+                        <div class="card-global" style="flex: 2;">
+                            <input type="text" id="numero" class="input-area" placeholder="Nº" />
+                        </div>
+                        <div class="card-global" style="flex: 3;">
+                            <input type="text" id="complemento" class="input-area" placeholder="Complemento" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 3. CAMPO DE SOLICITAÇÃO -->
+                <div class="campo-global">
                     <div class="card-global card-solicita">
                         <select id="solicita" class="input-area">
                             <option value="">-- Solicitação --</option>
@@ -272,11 +318,12 @@
                     </div>
                 </div>
 
+                <!-- 4. RESULTADO DO DESPACHO -->
                 <div class="card card-fixo-resultado">
                     <h2>Resultado do Despacho</h2>
                     <div class="textarea-wrapper">
                         <div class="area-visual-despacho">
-                            <div id="resultado" class="text-editor show-outlines"></div>
+                            <div id="resultado" class="text-editor show-outlines" contenteditable="true"></div>
                         </div>
                     </div>
                     <div class="botoes-acoes">
@@ -288,6 +335,7 @@
                         <ul id="listaSugestoes"></ul>
                     </div>
                 </div>
+
             </section>
         </div>
     </main>

@@ -1,7 +1,45 @@
-.campo-global{
-    margin-bottom: 8px;
+/* Garante que a coluna da direita respeite seu tamanho e o resizer */
+.body-despacho {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    box-sizing: border-box;
+    /* Se o container pai for flex e o resizer usar width no elemento:
+       mantenha flex: 0 0 auto; e defina a largura padrão abaixo,
+       ou ajuste para o valor exato que você usava antes */
+    width: var(--largura-despacho, 450px);
+    max-width: 100%;
 }
-.card-global{
+
+.body-despacho > *,
+.campo-localizacao > * {
+    min-width: 0;
+}
+
+.coluna-dados {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.coluna-dados.oculto {
+    display: none;
+}
+
+.campo-global {
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.campo-localizacao {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.card-global {
     background-color: var(--bg-card);
     border: 1px solid var(--cor-borda);
     border-radius: var(--radius-borda-card);
@@ -10,24 +48,30 @@
     box-sizing: border-box;
 }
 
-.campo-localizacao {
-    display: flex;
-    gap: 4px;
-    width: 100%;
-    margin-bottom: 8px;
-}
-.card-referencia{
+.card-referencia {
     flex: 9;
 }
 
 .card-solicita {
+    flex: 1;
     width: 100%;
 }
 
-/* Estilo do Cabeçalho (Nome, Contato, Referência) */
-.bloco-cabecalho-resultado {
-    font-size: var(--card-dinamico-fontSize);
+.input-area {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
 }
-.bloco-rodape-resultado {
-    font-size: var(--card-dinamico-fontSize);
+
+.input-area::placeholder {
+    color: var(--cor-texto-secundario, #6c757d);
+    opacity: 0.85;
 }

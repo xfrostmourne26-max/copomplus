@@ -409,7 +409,7 @@ window.limparPagina = function(muted = false, ignorarCateg = true, ignorarGlobal
 
     document.querySelectorAll("input, select, textarea").forEach(el => {
         if (ignorarCateg && el.id === "categoria") return;
-        if (ignorarGlobals && (el.id === "nome" || el.id === "contato" || el.id === "endereco" || el.id === "referencia" || el.id === "solicita")) return;
+        if (ignorarGlobals && (el.id === "nome" || el.id === "contato" || el.id === "cidade" || el.id === "bairro" || el.id === "endereco"  || el.id === "numero" || el.id === "complemento" || el.id === "solicita")) return;
 
         if (el.type === "checkbox" || el.type === "radio") {
             el.checked = false;
